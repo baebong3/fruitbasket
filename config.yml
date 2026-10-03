@@ -1,0 +1,38 @@
+# 과일바구니 가격 추적 서버 설정
+# 수정 후 커밋하면 다음 실행부터 반영됨
+
+# 수집 부류 (KAMIS p_item_category_code)
+#   100 식량작물 / 200 채소류 / 300 특용작물 / 400 과일류 / 500 축산물 / 600 수산물
+categories:
+  - code: "400"
+    name: 과일류
+  - code: "200"
+    name: 채소류
+
+# 구분 (KAMIS p_product_cls_code) : 01 소매, 02 도매
+product_classes:
+  - code: "01"
+    name: 소매
+  - code: "02"
+    name: 도매
+
+# 지역 (빈 값 = 전국 평균)
+country_code: ""
+
+# 가격 등급 기준 : 평년 대비 등락률(%) (평년가가 없으면 1년 전 가격과 비교)
+#   ratio <= green_max          -> GREEN  (쌈)
+#   green_max < ratio <= yellow_max -> YELLOW (보통)
+#   yellow_max < ratio <= orange_max -> ORANGE (비쌈)
+#   ratio > orange_max          -> RED    (매우 비쌈)
+grade:
+  green_max: -5.0
+  yellow_max: 5.0
+  orange_max: 20.0
+
+# 리포트에 표시할 등급 (상품·중품 등). 비우면 모두 표시
+rank_filter: ["상품"]
+
+# 리포트 추이 그래프에 쓰는 기간(일)
+trend_days: 90
+# 추이 그래프로 보여줄 품목 수 (평년 대비 변동폭이 큰 순)
+trend_items: 8
