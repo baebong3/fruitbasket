@@ -26,12 +26,42 @@ REPORTS = store.ROOT / "reports"
 WEEK = "월화수목금토일"
 
 GRADES = {
-    "GREEN": ("쌈", "#2E9E5B"),
-    "YELLOW": ("보통", "#C99A06"),
-    "ORANGE": ("비쌈", "#EE7B1E"),
-    "RED": ("매우 비쌈", "#D64545"),
+    # 이름, 막대색, 연한 바탕, 진한 글자
+    "GREEN": ("쌈", "#3DBE7A", "#E6F7EE", "#1F7A4B"),
+    "YELLOW": ("보통", "#F4BE2C", "#FFF6DA", "#8A6400"),
+    "ORANGE": ("비쌈", "#FF8A3D", "#FFEEE2", "#B4501A"),
+    "RED": ("매우 비쌈", "#FF5C6C", "#FFE8EA", "#B42536"),
 }
-UP, DOWN = "#D64545", "#2F6FD0"  # 상승 빨강, 하락 파랑
+UP, DOWN = "#F0475A", "#3D7BF2"  # 상승 빨강, 하락 파랑
+
+
+def face_svg(grade: str, size: int = 18) -> str:
+    """가격 수준 표정 아이콘 (쌈 = 활짝, 보통 = 무표정, 비쌈 = 시무룩, 매우 비쌈 = 울상+땀)"""
+    c = GRADES[grade][1]
+    mouth = {
+        "GREEN": "M7 13.2q5 4.6 10 0",
+        "YELLOW": "M8 14.6h8",
+        "ORANGE": "M8 15.6q4-2.6 8 0",
+        "RED": "M7.6 16.4q4.4-4 8.8 0",
+    }[grade]
+    sweat = ('<path d="M19.2 4.2q1.8 2.6 0 3.6q-1.8-1 0-3.6z" fill="#7CC4FF"/>' if grade == "RED" else "")
+    cheeks = ('<circle cx="6" cy="12.6" r="1.4" fill="#fff" opacity=".45"/>'
+              '<circle cx="18" cy="12.6" r="1.4" fill="#fff" opacity=".45"/>' if grade == "GREEN" else "")
+    return (f'<svg class="face" width="{size}" height="{size}" viewBox="0 0 24 24" aria-hidden="true">'
+            f'<circle cx="12" cy="12" r="11" fill="{c}"/>{cheeks}'
+            '<circle cx="8.6" cy="9.6" r="1.35" fill="#2b2b2b"/><circle cx="15.4" cy="9.6" r="1.35" fill="#2b2b2b"/>'
+            f'<path d="{mouth}" fill="none" stroke="#2b2b2b" stroke-width="1.6" stroke-linecap="round"/>{sweat}</svg>')
+
+
+LOGO = (
+    '<svg width="40" height="40" viewBox="0 0 48 48" aria-hidden="true">'
+    '<path d="M12 22q12-18 24 0" fill="none" stroke="#C98B4E" stroke-width="3" stroke-linecap="round"/>'
+    '<circle cx="18" cy="19" r="7" fill="#FF6B6B"/><path d="M18 12q2-4 5-4" stroke="#6B4A2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
+    '<circle cx="29" cy="18.5" r="6.5" fill="#FFB238"/><path d="M29 12q3-3 6-1.5q-2.5 3-6 1.5z" fill="#4CC38A"/>'
+    '<path d="M7 22h34l-3.5 17a3 3 0 0 1-3 2.4h-21a3 3 0 0 1-3-2.4z" fill="#E9A866"/>'
+    '<path d="M9.5 28.5h29M11 34.5h26" stroke="#C98B4E" stroke-width="1.8" stroke-linecap="round"/>'
+    '<circle cx="18" cy="20" r="1.2" fill="#fff" opacity=".7"/></svg>'
+)
 
 
 # ---------- 계산 ----------
@@ -197,7 +227,8 @@ def table_html(recs: list[dict]) -> str:
     body = []
     for r in rs:
         g = GRADES.get(r["grade"])
-        badge = f'<span class="badge" style="--c:{g[1]}">{g[0]}</span>' if g else "-"
+        badge = (f'<span class="badge" style="background:{g[2]};color:{g[3]}">{face_svg(r["grade"], 16)}{g[0]}</span>'
+                 if g else "-")
         body.append(
             f'<tr><td class="l">{esc(r["label"])}</td><td class="u">{esc(r["unit"])}</td>'
             f'<td><span class="n"><b>{won(r["today"])}</b></span></td>'
@@ -228,11 +259,13 @@ def spark_svg(points: list[tuple[str, int]], color: str) -> str:
         return y + 18 if below else y - 10
     y0 = ly(ys[0], ys[1] if n > 1 else ys[0])
     y1 = ly(ys[-1], ys[-2] if n > 1 else ys[-1])
+    area = f"{path} L{xs[-1]:.1f},{H - B + 6:.1f} L{xs[0]:.1f},{H - B + 6:.1f} Z"
     return (
         f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="가격 추이">'
-        f'<path d="{path}" fill="none" stroke="{color}" stroke-width="2.2" stroke-linejoin="round"/>'
-        f'<circle cx="{xs[0]:.1f}" cy="{ys[0]:.1f}" r="3" fill="{color}"/>'
-        f'<circle cx="{xs[-1]:.1f}" cy="{ys[-1]:.1f}" r="3.5" fill="{color}"/>'
+        f'<path d="{area}" fill="{color}" opacity=".12"/>'
+        f'<path d="{path}" fill="none" stroke="{color}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>'
+        f'<circle cx="{xs[0]:.1f}" cy="{ys[0]:.1f}" r="3.6" fill="#fff" stroke="{color}" stroke-width="2"/>'
+        f'<circle cx="{xs[-1]:.1f}" cy="{ys[-1]:.1f}" r="4.4" fill="{color}" stroke="#fff" stroke-width="2"/>'
         f'<text x="{L}" y="{y0:.1f}" class="sv">{vals[0]:,}</text>'
         f'<text x="{W - R}" y="{y1:.1f}" class="sv" text-anchor="end">{vals[-1]:,}</text>'
         f'<text x="{L}" y="{H - 4}" class="sd">{d0}</text>'
@@ -255,8 +288,11 @@ def trends_html(recs_by_cat: dict, history: list[dict], cfg: dict, asof: str) ->
         if len(pts) < 2:
             continue
         color = GRADES[r["grade"]][1]
+        g = GRADES[r["grade"]]
         cards.append(
-            f'<div class="tc"><div class="tt">{esc(r["label"])}<span>{esc(r["unit"])}</span></div>'
+            f'<div class="tc"><div class="tt">{face_svg(r["grade"], 20)}<b>{esc(r["label"])}</b>'
+            f'<span class="tu">{esc(r["unit"])}</span>'
+            f'<span class="tp" style="background:{g[2]};color:{g[3]}">평년 {sp(r["base"])}</span></div>'
             f'{spark_svg(pts, color)}</div>'
         )
         if len(cards) >= int(cfg.get("trend_items", 8)):
@@ -268,47 +304,61 @@ def trends_html(recs_by_cat: dict, history: list[dict], cfg: dict, asof: str) ->
 
 
 CSS = """
-:root{--ink:#16202a;--sub:#5b6875;--line:#e3e7ec;--bg:#fff;--soft:#f6f8fa;--acc:#E8590C}
+:root{--ink:#2A2F3A;--sub:#7A8190;--line:#EEF0F4;--bg:#fff;--card:#FAFBFD;--peach:#FFF1E6;--acc:#FF7A45;--mint:#E8F7F0}
 *{box-sizing:border-box}html{color-scheme:light}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 Pretendard,"Pretendard Variable",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-variant-numeric:tabular-nums}
-.wrap{max-width:1080px;margin:0 auto;padding:0 16px 48px}
-header{border-bottom:3px solid var(--ink);padding:22px 0 12px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
-.brand{font-weight:800;font-size:20px;letter-spacing:-.02em}.brand em{font-style:normal;color:var(--acc)}
-.meta{color:var(--sub);font-size:13px}
-h1{font-size:26px;line-height:1.35;letter-spacing:-.03em;margin:22px 0 14px;word-break:keep-all}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
-.kpi{border-top:2px solid var(--ink);padding:10px 2px 4px}
-.kpi .k{font-size:13px;color:var(--sub)}.kpi .x{font-size:26px;font-weight:800;letter-spacing:-.02em}
-.kpi .x small{font-size:14px;font-weight:600;color:var(--sub);margin-left:2px}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}.chip{font-size:13px;padding:3px 10px;border-radius:999px;background:#eaf6ef;color:#1d6b3d}
-.tabs input{position:absolute;opacity:0}
-.tabs>label{display:inline-block;padding:9px 22px;margin:26px 4px 0 0;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;cursor:pointer;font-weight:700;color:var(--sub);background:var(--soft)}
-.tabs input:checked+label{background:var(--ink);color:#fff;border-color:var(--ink)}
-.panel{display:none;border-top:2px solid var(--ink);padding-top:6px}
-#t0:checked~#p0,#t1:checked~#p1,#t2:checked~#p2{display:block}
-h2{font-size:19px;margin:26px 0 4px;letter-spacing:-.02em}h3{font-size:15px;margin:18px 0 8px;color:var(--sub)}
-.bars{display:grid;grid-template-columns:max-content 1fr;column-gap:12px;row-gap:5px;align-items:center}
-.bl{font-size:14px;white-space:nowrap;text-align:right}.bl sup{color:var(--sub)}
-.bt{display:grid;grid-template-columns:1fr 1fr;height:24px;border-left:0}
-.neg,.pos{display:flex;align-items:center;gap:6px}.neg{justify-content:flex-end;border-right:1px solid #9aa4ae}
-.bt i{display:block;height:16px;border-radius:2px}.v{font-size:13.5px;font-weight:700;white-space:nowrap}
-.note,.empty{color:var(--sub);font-size:13px}
-.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
-th{font-size:13px;color:var(--sub);font-weight:600;padding:8px 6px;border-bottom:2px solid var(--ink);white-space:nowrap;text-align:center}
-td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
-td.l{text-align:left;font-weight:600}td.u{color:var(--sub);font-size:13px}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 Pretendard,"Pretendard Variable",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 56px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:22px 0 6px}
+.brand{display:flex;align-items:center;gap:10px}.brand b{font-size:21px;font-weight:800;letter-spacing:-.03em}
+.brand small{display:block;font-size:12.5px;color:var(--sub);font-weight:500;letter-spacing:0;margin-top:-2px}
+.meta{font-size:12.5px;color:var(--sub);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+.hero{background:linear-gradient(135deg,#FFF3E9 0%,#FFF8EF 55%,#F0FAF4 100%);border-radius:24px;padding:22px 22px 18px;margin-top:14px}
+.hero .tag{display:inline-block;font-size:12.5px;font-weight:700;color:var(--acc);background:#fff;border-radius:999px;padding:3px 11px;margin-bottom:8px}
+h1{font-size:25px;line-height:1.4;letter-spacing:-.035em;margin:0 0 16px;word-break:keep-all;font-weight:800}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{background:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 1px 0 rgba(42,47,58,.04),0 6px 18px -12px rgba(42,47,58,.25)}
+.kpi .k{font-size:12.5px;color:var(--sub);font-weight:600;word-break:keep-all}.kpi .x{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.3;white-space:nowrap}
+.kpi .x small{font-size:13.5px;font-weight:600;color:var(--sub);margin-left:2px}
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:14px;font-size:13px;color:var(--sub);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;padding:3px 11px 3px 5px;border-radius:999px;background:#fff;color:#1F7A4B}
+.tabs{margin-top:26px}.tabs input{position:absolute;opacity:0}
+.seg{display:inline-flex;background:#F1F3F7;border-radius:999px;padding:4px;gap:2px}
+.seg label{padding:7px 22px;border-radius:999px;cursor:pointer;font-weight:700;color:var(--sub);font-size:14.5px}
+#t0:checked~.seg label[for=t0],#t1:checked~.seg label[for=t1],#t2:checked~.seg label[for=t2]{background:#fff;color:var(--ink);box-shadow:0 2px 8px -3px rgba(42,47,58,.3)}
+.panel{display:none}#t0:checked~#p0,#t1:checked~#p1,#t2:checked~#p2{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px 18px 16px;margin-top:16px}
+h2{font-size:18.5px;margin:0 0 2px;letter-spacing:-.03em;font-weight:800;display:flex;align-items:center;gap:8px}
+h2 .dot{width:10px;height:10px;border-radius:50%;background:var(--acc)}
+h3{font-size:13.5px;margin:16px 0 8px;color:var(--sub);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--sub);margin:0 0 12px}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.bars{display:grid;grid-template-columns:max-content 1fr;column-gap:12px;row-gap:6px;align-items:center}
+.bl{font-size:14px;white-space:nowrap;text-align:right;font-weight:600}.bl sup{color:var(--sub)}
+.bt{display:grid;grid-template-columns:1fr 1fr;height:26px}
+.neg,.pos{display:flex;align-items:center;gap:6px}.neg{justify-content:flex-end;border-right:2px dotted #D5D9E0}
+.pos{padding-left:2px}.neg{padding-right:2px}
+.bt i{display:block;height:16px;border-radius:999px}.v{font-size:13.5px;font-weight:800;white-space:nowrap}
+.note,.empty{color:var(--sub);font-size:12.5px;margin:10px 0 0}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:780px;font-size:14px}
+th{font-size:12.5px;color:var(--sub);font-weight:700;padding:10px 8px;background:var(--card);white-space:nowrap;text-align:center}
+td{padding:9px 8px;border-top:1px solid var(--line);text-align:center;white-space:nowrap}
+tbody tr:hover td{background:#FFFAF5}
+td.l{text-align:left;font-weight:700;padding-left:14px}td.u{color:var(--sub);font-size:13px}
 .n{display:inline-block;min-width:6.2em;text-align:right}
-tbody tr:last-child td{border-bottom:2px solid var(--ink)}
-.badge{display:inline-block;font-size:12.5px;font-weight:700;color:var(--c);border:1.5px solid var(--c);border-radius:4px;padding:0 7px}
-.tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-.tc{border:1px solid var(--line);border-radius:8px;padding:10px 12px 4px}
-.tt{font-weight:700;font-size:14px}.tt span{font-weight:400;color:var(--sub);font-size:12.5px;margin-left:6px}
-.tc svg{width:100%;height:auto;display:block}.sv{font-size:13px;font-weight:700;fill:var(--ink)}.sd{font-size:11.5px;fill:var(--sub)}
-.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--sub);margin:6px 0 0}.legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
-.arch{columns:3 150px;font-size:14px;padding-left:18px}.arch a{color:var(--ink)}
-footer{margin-top:40px;padding-top:12px;border-top:1px solid var(--line);color:var(--sub);font-size:12.5px}
-@media (max-width:640px){h1{font-size:21px}.kpis{grid-template-columns:repeat(2,1fr)}.kpi .x{font-size:22px}.tabs>label{padding:8px 16px}}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px 2px 3px}
+.face{flex:none;display:block}
+.tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.tc{background:var(--card);border-radius:16px;padding:12px 14px 6px}
+.tt{display:flex;align-items:center;gap:6px;font-size:14px;flex-wrap:wrap}.tu{color:var(--sub);font-size:12px}
+.tp{margin-left:auto;font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px}
+.tc>svg{width:100%;height:auto;display:block}.sv{font-size:13px;font-weight:800;fill:var(--ink)}.sd{font-size:11.5px;fill:var(--sub)}
+.arch{display:flex;flex-wrap:wrap;gap:6px;padding:0;margin:0;list-style:none}
+.arch a{display:inline-block;font-size:13px;color:var(--ink);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.arch a:hover{border-color:var(--acc);color:var(--acc)}
+footer{margin-top:30px;text-align:center;color:var(--sub);font-size:12px;line-height:1.8}
+footer a{color:var(--acc);font-weight:700;text-decoration:none;white-space:nowrap}
+@media (max-width:640px){h1{font-size:20.5px}.hero{padding:18px 16px 14px;border-radius:20px}.kpis{grid-template-columns:repeat(2,1fr)}.kpi .x{font-size:22px}.card{padding:16px 12px 14px}.seg label{padding:7px 18px}}
 """
 
 
@@ -316,29 +366,36 @@ def page_html(snap: dict, recs_by_cls: dict, s: dict, history: list[dict], cfg: 
               archive: list[str], rel: str) -> str:
     asof = snap["date"]
     g = cfg["grade"]
-    legend = (
-        f'<div class="legend"><span><b style="background:{GRADES["GREEN"][1]}"></b>쌈 ({g["green_max"]:+.0f}% 이하)</span>'
-        f'<span><b style="background:{GRADES["YELLOW"][1]}"></b>보통</span>'
-        f'<span><b style="background:{GRADES["ORANGE"][1]}"></b>비쌈 ({g["yellow_max"]:+.0f}% 초과)</span>'
-        f'<span><b style="background:{GRADES["RED"][1]}"></b>매우 비쌈 ({g["orange_max"]:+.0f}% 초과)</span></div>'
-    )
-    tabs, panels = [], []
+    rng = {
+        "GREEN": f'{g["green_max"]:+.0f}% 이하', "YELLOW": f'{g["green_max"]:+.0f}~{g["yellow_max"]:+.0f}%',
+        "ORANGE": f'{g["yellow_max"]:+.0f}% 초과', "RED": f'{g["orange_max"]:+.0f}% 초과',
+    }
+    legend = '<div class="legend">' + "".join(
+        f'<span>{face_svg(k, 15)}{GRADES[k][0]} ({rng[k]})</span>' for k in GRADES) + "</div>"
+
+    inputs, labels, panels = [], [], []
     for i, (cls, cats) in enumerate(recs_by_cls.items()):
         chk = " checked" if i == 0 else ""
-        tabs.append(f'<input type="radio" name="t" id="t{i}"{chk}><label for="t{i}">{esc(cls)}</label>')
+        inputs.append(f'<input type="radio" name="t" id="t{i}"{chk}>')
+        labels.append(f'<label for="t{i}">{esc(cls)}</label>')
         sec = []
         for cat, recs in cats.items():
-            sec.append(f"<h2>{esc(cat)} {esc(cls)} 가격</h2><h3>평년 대비 등락률</h3>{legend}"
-                       f"{bars_html(recs)}<h3>품목별 가격</h3>{table_html(recs)}")
-        sec.append(f"<h2>{esc(cls)} 가격 추이</h2><h3>최근 {int(cfg.get('trend_days', 90)):,}일, 평년 대비 변동이 큰 품목</h3>"
-                   + trends_html(cats, history, cfg, asof))
+            sec.append(f'<div class="card"><h2><span class="dot"></span>{esc(cat)} {esc(cls)} 가격</h2>'
+                       f"<h3>평년 대비 얼마나 올랐나</h3>{legend}{bars_html(recs)}"
+                       f"<h3>품목별 가격</h3>{table_html(recs)}</div>")
+        sec.append(f'<div class="card"><h2><span class="dot" style="background:#4CC38A"></span>{esc(cls)} 가격 추이</h2>'
+                   f"<h3>최근 {int(cfg.get('trend_days', 90)):,}일, 평년 대비 변동이 큰 품목</h3>"
+                   + trends_html(cats, history, cfg, asof) + "</div>")
         panels.append(f'<section class="panel" id="p{i}">{"".join(sec)}</section>')
 
     top = s["top"]
-    top_txt = f'{esc(top["label"])}<small>{sp(top["base"])}</small>' if top and top["base"] is not None else "-"
-    chips = "".join(f'<span class="chip">{esc(r["label"])} {sp(r["base"])}</span>' for r in s["cheap"])
-    chips_html = f'<div class="chips">평년보다 싼 {s["cls_name"]} 과일 {chips}</div>' if chips else ""
+    top_txt = (f'{esc(top["label"])}<small>{sp(top["base"])}</small>'
+               if top and top["base"] is not None else "-")
+    chips = "".join(f'<span class="chip">{face_svg("GREEN", 16)}{esc(r["label"])} {sp(r["base"])}</span>'
+                    for r in s["cheap"])
+    chips_html = f'<div class="chips">지금 사기 좋은 과일 {chips}</div>' if chips else ""
     arch = "".join(f'<li><a href="{rel}reports/{d}.html">{kdate(d)}</a></li>' for d in archive[:60])
+    fetched = esc(snap.get("fetched_at", "")[:16].replace("T", " "))
 
     out = f"""<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -346,18 +403,20 @@ def page_html(snap: dict, recs_by_cls: dict, s: dict, history: list[dict], cfg: 
 <title>과일바구니 가격 리포트 {asof}</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
 <style>{CSS}</style></head><body><div class="wrap">
-<header><div class="brand">과일<em>바구니</em> 가격 리포트</div>
-<div class="meta"><span style="white-space:nowrap">조사일 {kdate(asof)}</span> · <span style="white-space:nowrap">갱신 {esc(snap.get('fetched_at', '')[:16].replace('T', ' '))} KST</span></div></header>
+<header><div class="brand">{LOGO}<div><b>과일바구니</b><small>오늘의 과일·채소 가격 리포트</small></div></div>
+<div class="meta"><span style="white-space:nowrap">조사일 {kdate(asof)}</span> · <span style="white-space:nowrap">갱신 {fetched}</span></div></header>
+<section class="hero"><span class="tag">오늘의 한 줄</span>
 <h1>{esc(s['headline'])}</h1>
 <div class="kpis">
 <div class="kpi"><div class="k">조사 품목({esc(s['cls_name'])})</div><div class="x">{s['n_items']:,}<small>개</small></div></div>
-<div class="kpi"><div class="k">전일 대비 상승 / 하락</div><div class="x" ><span style="color:{UP}">{s['up']:,}</span><small>/</small><span style="color:{DOWN}">{s['down']:,}</span></div></div>
+<div class="kpi"><div class="k">어제보다 오름 / 내림</div><div class="x"><span style="color:{UP}">{s['up']:,}</span><small>/</small><span style="color:{DOWN}">{s['down']:,}</span></div></div>
 <div class="kpi"><div class="k">평년보다 비싼 과일</div><div class="x">{s['pricey']:,}<small>/ {s['n_fruit']:,}개</small></div></div>
-<div class="kpi"><div class="k">평년 대비 최대 상승</div><div class="x" style="font-size:20px">{top_txt}</div></div>
-</div>{chips_html}
-<div class="tabs">{''.join(tabs)}{''.join(panels)}</div>
-<h2>지난 리포트</h2><ul class="arch">{arch}</ul>
-<footer>자료: KAMIS 농산물유통정보(한국농수산식품유통공사) 일별 부류별 가격 · 가격 수준은 평년(최근 5년 중 최대·최소 제외 평균) 대비 등락률 기준 · GitHub Actions로 매일 자동 생성 · <a style="white-space:nowrap" href="{rel}fruitbasket_prices.xlsx">엑셀 받기</a></footer>
+<div class="kpi"><div class="k">가장 비싸진 품목</div><div class="x" style="font-size:19px;white-space:normal;word-break:keep-all">{top_txt}</div></div>
+</div>{chips_html}</section>
+<div class="tabs">{''.join(inputs)}<div class="seg">{''.join(labels)}</div>{''.join(panels)}</div>
+<div class="card"><h2><span class="dot" style="background:#FFB238"></span>지난 리포트</h2><h3>날짜를 누르면 그날 리포트를 볼 수 있어요</h3><ul class="arch">{arch}</ul></div>
+<footer>자료: KAMIS 농산물유통정보(한국농수산식품유통공사) 일별 부류별 가격<br>
+가격 수준은 평년(최근 5년 중 최대·최소를 뺀 평균) 대비 등락률 기준 · 매일 자동 생성 · <a href="{rel}fruitbasket_prices.xlsx">엑셀 받기</a></footer>
 </div></body></html>"""
     return no_dash(out)
 
