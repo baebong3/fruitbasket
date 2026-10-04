@@ -16,6 +16,7 @@ KAMIS Open API(부류별 일별 가격)로 과일·채소 소매·도매 가격�
 | 경로 | 내용 |
 |---|---|
 | `data/prices.csv` | 누적 이력 (날짜 × 구분 × 품목·품종·등급, 당일가). 엑셀에서 바로 열리는 UTF-8 BOM |
+| `data/status.json` | 마지막 실행 시각·결과(new_data / unchanged / no_data / error)·누적 행 수. 매 실행마다 갱신되어 저장소 활동이 유지됨 |
 | `data/snapshots/YYYY-MM-DD.json` | 조사일별 원자료 (전일·1주·1개월·1년 전·평년 가격 포함) |
 | `docs/index.html` | 최신 대시보드 (GitHub Pages 첫 화면, JS 없이도 표시) |
 | `docs/reports/YYYY-MM-DD.html` | 날짜별 보관본 |
