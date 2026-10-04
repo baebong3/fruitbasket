@@ -396,6 +396,7 @@ def main() -> int:
     bk = basketmod.build(book, history, asof)
     sh = shopping.compute_index(bk)
     rb = shopping.recommend_basket(book, cfg["grade"], recipes)
+    s["headline"], s["sub"] = shopping.headline(recs, bk, sh)
     bk["index_history_html"] = shopping.index_history_html(sh)
     idx = page_html(snap, recs, s, history, cfg, archive, "", links, used, recipes, bk, sh, rb)
     arc = page_html(snap, recs, s, history, cfg, archive, "../", links, used, recipes, bk, sh, rb)

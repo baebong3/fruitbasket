@@ -174,9 +174,8 @@ def hero_html(sh: dict, bk: dict, s: dict, rel: str) -> str:
     for nm, v in (("평년 대비", sh["level_score"]), ("1년 중 위치", sh["pos_score"]), ("최근 1주 추세", sh["trend_score"])):
         comp.append(f'<div><div class="k">{nm}</div><div class="x2">{int(round(v)) if v is not None else "-"}<small>점</small></div></div>')
     wk = sh["week_change"]
-    sub = (f'장바구니 비용 <b>{won(bk["today"])}원</b> · 평년보다 {abs(q1(float(bk["idx_avg_all"]) - 100)):,.1f}% {"싸고" if bk["idx_avg_all"] < 100 else "비싸고"} '
-           f'1주 전보다 {abs(wk):,.1f}% {"내림" if wk < 0 else "오름"}' if wk is not None and bk["idx_avg_all"] is not None else
-           f'장바구니 비용 <b>{won(bk["today"])}원</b>')
+    sub = (f'장바구니 비용 <b>{won(bk["today"])}원</b> (평년 가격이면 {won(bk["cost_avg_all"])}원) · {esc(s.get("sub", ""))}'
+           if bk.get("cost_avg_all") is not None else f'장바구니 비용 <b>{won(bk["today"])}원</b> · {esc(s.get("sub", ""))}')
     return (f'<section class="hero2"><div class="g"><div class="eyebrow">오늘의 장보기 지수</div>{gauge_svg(score, sh["color"])}'
             f'<div class="gl" style="color:{sh["color"]}">{esc(sh["name"])}</div></div>'
             f'<div class="ht"><div class="eyebrow">Today\'s Market</div><h1>{esc(s["headline"])}</h1><p class="hsub">{sub}</p>'
@@ -208,3 +207,48 @@ def basket_html(rb: dict, rel: str, links: dict) -> str:
     skip = f'<p class="note">{esc("·".join(rb["skipped"]))}군은 오늘 평년보다 싼 품목이 없어 뺌</p>' if rb["skipped"] else ""
     return (f'<div class="card" id="todaybasket"><h2>오늘 장을 본다면<small>평년보다 싼 품목으로 짠 4인 가구 1주일 장바구니 · 품목 아래는 만들 수 있는 요리</small></h2>'
             f'{tot}<div class="tw">{tab}</div>{skip}</div>')
+
+
+def headline(recs_by_cls: dict, bk: dict, sh: dict) -> tuple[str, str]:
+    """오늘 상황을 한 문장으로 : 수준 + 특히 싼 품목 + 비싼 품목. 둘째 값은 보조 설명"""
+    retail = recs_by_cls.get("소매") or next(iter(recs_by_cls.values()), {})
+    allr = [r for rs in retail.values() for r in rs if r["base"] is not None]
+    idx = bk["idx_avg_all"]
+    if idx is None:
+        level = "평년 비교 자료 없음"
+    else:
+        d = float(idx) - 100
+        if d <= -10:
+            level = f"과일·채소 장바구니가 평년보다 {abs(d):.0f}% 싼 날"
+        elif d <= -3:
+            level = "과일·채소 장바구니가 평년보다 조금 싼 날"
+        elif d < 3:
+            level = "과일·채소 장바구니가 평년 수준인 날"
+        elif d < 10:
+            level = "과일·채소 장바구니가 평년보다 조금 비싼 날"
+        else:
+            level = f"과일·채소 장바구니가 평년보다 {d:.0f}% 비싼 날"
+    # 특히 싼 품목 : 품목명 기준 중복 제거, 평년 대비 하락폭 큰 순 3개
+    seen, cheap, pricey = set(), [], []
+    for r in sorted(allr, key=lambda r: r["base"]):
+        if r["grade"] == "GREEN" and r["name"] not in seen and len(cheap) < 3:
+            cheap.append(r["name"]); seen.add(r["name"])
+    seen = set()
+    for r in sorted(allr, key=lambda r: -r["base"]):
+        if r["grade"] in ("RED", "ORANGE") and r["name"] not in seen and len(pricey) < 2:
+            pricey.append(r["name"]); seen.add(r["name"])
+    parts = []
+    if cheap:
+        parts.append(f"{'·'.join(cheap)}는 특히 싸고")
+    if pricey:
+        parts.append(f"{'·'.join(pricey)}는 평년보다 비쌈")
+    elif cheap:
+        parts[-1] = parts[-1].replace("싸고", "쌈")
+    head = f"{level} - {' '.join(parts)}" if parts else level
+    n_green = sum(1 for r in allr if r["grade"] == "GREEN")
+    n_bad = sum(1 for r in allr if r["grade"] in ("RED", "ORANGE"))
+    wk = sh.get("week_change")
+    sub = f"비교 가능한 {len(allr):,}개 품목 중 평년보다 싼 품목 {n_green:,}개, 비싼 품목 {n_bad:,}개"
+    if wk is not None:
+        sub += f" · 장바구니 비용은 1주 전보다 {abs(wk):,.1f}% {'내림' if wk < 0 else '오름' if wk > 0 else '같음'}"
+    return head, sub
