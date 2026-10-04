@@ -17,11 +17,11 @@ concurrency:
 
 jobs:
   backfill:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -34,16 +34,21 @@ jobs:
           KAMIS_PROXY_URL: ${{ secrets.KAMIS_PROXY_URL }}
         run: python scripts/backfill.py --days "${{ inputs.days }}"
 
-      - name: 최신 수집 + 리포트 재생성
+      - name: 최신 수집
+        if: always()
         env:
           KAMIS_CERT_KEY: ${{ secrets.KAMIS_CERT_KEY }}
           KAMIS_CERT_ID: ${{ secrets.KAMIS_CERT_ID }}
           KAMIS_PROXY_URL: ${{ secrets.KAMIS_PROXY_URL }}
-        run: |
-          python scripts/collect.py
-          python scripts/report.py
+        run: python scripts/collect.py
 
+      - name: 리포트 생성
+        if: always()
+        run: python scripts/report.py
+
+      # 리포트가 실패해도 받아온 가격 데이터는 반드시 저장
       - name: 커밋·푸시
+        if: always()
         run: |
           git config user.name "fruitbasket-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

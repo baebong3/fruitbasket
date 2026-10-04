@@ -507,7 +507,7 @@ def verify(html_text: str, recs_by_cls: dict) -> list[str]:
     if any(not v.strip() for v in vals):
         errs.append("빈 막대 수치 라벨")
     for txt in re.findall(r'<span class="n"[^>]*>(?:<b>)?([^<]*)', html_text) + re.findall(r'class="sv"[^>]*>([^<]*)<', html_text):
-        if re.search(r"\d{4,}", txt.replace(".", "")):
+        if re.search(r"\d{4,}", re.sub(r"\.\d+", "", txt)):  # 소수부는 떼고 정수부 자릿수만 검사
             errs.append(f"천 단위 콤마 누락: {txt}")
             break
     return errs
