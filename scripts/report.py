@@ -85,20 +85,61 @@ def grade_of(p: Decimal | None, g: dict) -> str | None:
     return "RED"
 
 
+def strip_unit(kind: str) -> str:
+    """끝에 붙은 단위 괄호를 중첩까지 제거: '여름(고랭지)(10kg(그물망 3포기))' -> '여름(고랭지)'"""
+    k = kind.strip()
+    if not k.endswith(")"):
+        return k
+    depth = 0
+    for i in range(len(k) - 1, -1, -1):
+        depth += {")": 1, "(": -1}.get(k[i], 0)
+        if depth == 0:
+            inner = k[i + 1:-1]
+            if re.search(r"\d", inner) and re.search(r"(kg|g|개|포기|마리|속|단|봉|통|L|ml|송이|입|묶음|접)", inner):
+                return k[:i].strip()
+            return k
+    return k
+
+
 def label_of(it: dict) -> str:
-    kind = it.get("kind_name", "")
-    name = it["item_name"]
-    return f"{name}({kind})" if kind and kind != name else name
+    """사과 + 홍로(10개) -> 사과(홍로), 붉은고추 + 붉은고추(100g) -> 붉은고추 (단위는 단위 열에 따로 표시)"""
+    name = it["item_name"].strip()
+    kind = strip_unit(it.get("kind_name", ""))
+    if not kind or kind == name or kind in name:
+        return name
+    return f"{name}({kind})"
 
 
-def build_records(snap: dict, cfg: dict) -> dict:
+def fill_from_history(p: dict, sid: str, asof: str, hist_idx: dict) -> dict:
+    """KAMIS가 비워 둔 1주·1개월 전 가격(명절 휴장 등)을 저장된 이력의 가장 가까운 이전 조사일 값으로 채움"""
+    series = hist_idx.get(sid)
+    if not series:
+        return p
+    p = dict(p)
+    base = date.fromisoformat(asof)
+    for key, days in (("w1", 7), ("m1", 30)):
+        if p.get(key) is not None:
+            continue
+        for back in range(0, 5):  # 목표일부터 최대 4일 이전까지
+            d = (base - timedelta(days=days + back)).isoformat()
+            if d in series:
+                p[key] = series[d]
+                break
+    return p
+
+
+def build_records(snap: dict, cfg: dict, history: list[dict] | None = None) -> dict:
     """{cls_name: {cat_name: [record,...]}}"""
     ranks = set(cfg.get("rank_filter") or [])
+    hist_idx: dict = defaultdict(dict)
+    for h in history or []:
+        hist_idx[store.series_id(h)][h["date"]] = h["price"]
     out: dict = defaultdict(dict)
     for g in snap["groups"]:
         recs = []
         for it in g["items"]:
-            p = it["prices"]
+            sid0 = "|".join([g["cls_code"], it["item_code"], it["kind_code"], it["rank_code"]])
+            p = fill_from_history(it["prices"], sid0, snap["date"], hist_idx)
             if p.get("today") is None:
                 continue
             if ranks and it.get("rank") and it["rank"] not in ranks:
@@ -106,6 +147,8 @@ def build_records(snap: dict, cfg: dict) -> dict:
             base_key = "avg" if p.get("avg") else "y1"
             r = {
                 "label": label_of(it), "rank": it.get("rank", ""), "unit": it["unit"],
+                "name": it["item_name"].strip(),
+                "kind": (label_of(it)[len(it["item_name"].strip()) + 1:-1] if label_of(it) != it["item_name"].strip() else ""),
                 "cat": g["cat_name"], "cls": g["cls_name"],
                 "sid": "|".join([g["cls_code"], it["item_code"], it["kind_code"], it["rank_code"]]),
                 "today": p.get("today"),
@@ -140,6 +183,8 @@ def won(v: int | None) -> str:
 def sp(p: Decimal | None) -> str:
     if p is None:
         return "-"
+    if p == 0:
+        return "0.0%"  # -0.0% 방지
     return f"+{p:,.1f}%" if p > 0 else f"{p:,.1f}%"
 
 
@@ -198,14 +243,17 @@ def bars_html(recs: list[dict]) -> str:
     mx = max(abs(r["base"]) for r in rs) or Decimal(1)
     rows = []
     for r in rs:
-        w = float(abs(r["base"]) / mx) * 72  # 반쪽 폭의 최대 72%, 나머지는 수치 라벨 자리
+        ratio = float(abs(r["base"]) / mx)
         color = GRADES[r["grade"]][1]
         val = f'<span class="v">{sp(r["base"])}</span>'
-        bar = f'<i style="width:{w:.1f}%;background:{color}"></i>'
+        # 막대는 수치 라벨 자리(4.6em)를 뺀 폭 안에서만 늘어남 -> 모바일에서도 수치가 잘리지 않음
+        bar = f'<i style="width:calc((100% - 4.6em) * {ratio:.4f});background:{color}"></i>'
         neg = f"{val}{bar}" if r["base"] < 0 else ""
         pos = f"{bar}{val}" if r["base"] >= 0 else ""
         mark = "" if r["base_key"] == "avg" else '<sup title="평년가 없음, 1년 전 대비">*</sup>'
-        rows.append(f'<div class="bl">{esc(r["label"])}{mark}</div>'
+        sub = f'<small>{esc(r["kind"])}</small>' if r["kind"] else ""
+        rows.append(f'<div class="bl"><span class="fl">{esc(r["label"])}{mark}</span>'
+                    f'<span class="mn">{esc(r["name"])}{mark}{sub}</span></div>'
                     f'<div class="bt"><div class="neg">{neg}</div><div class="pos">{pos}</div></div>')
     note = ""
     if any(r["base_key"] != "avg" for r in rs):
@@ -222,18 +270,20 @@ def chg_cell(p: Decimal | None) -> str:
 
 def table_html(recs: list[dict]) -> str:
     rs = sorted(recs, key=lambda r: (r["base"] is None, -(r["base"] or 0)))
-    head = ("<tr><th>품목</th><th>단위</th><th>오늘 가격(원)</th><th>전일 대비</th><th>1주 전 대비</th>"
-            "<th>1개월 전 대비</th><th>1년 전 대비</th><th>평년 대비</th><th>가격 수준</th></tr>")
+    head = ("<tr><th class='l'>품목</th><th class='u'>단위</th><th>오늘 가격(원)</th><th>평년 대비</th><th>가격 수준</th>"
+            "<th>전일 대비</th><th>1주 전 대비</th><th>1개월 전 대비</th><th>1년 전 대비</th></tr>")
     body = []
     for r in rs:
         g = GRADES.get(r["grade"])
-        badge = (f'<span class="badge" style="background:{g[2]};color:{g[3]}">{face_svg(r["grade"], 16)}{g[0]}</span>'
+        badge = (f'<span class="badge" style="background:{g[2]};color:{g[3]}">{face_svg(r["grade"], 16)}<em>{g[0]}</em></span>'
                  if g else "-")
         body.append(
-            f'<tr><td class="l">{esc(r["label"])}</td><td class="u">{esc(r["unit"])}</td>'
+            f'<tr><td class="l"><span class="fl">{esc(r["label"])}</span><span class="mn">{esc(r["name"])}</span>'
+            f'<small class="lu">{esc(" · ".join(x for x in (r["kind"], r["rank"] if r["label"].endswith(r["rank"]) and r["rank"] else "", r["unit"]) if x))}</small></td>'
+            f'<td class="u">{esc(r["unit"])}</td>'
             f'<td><span class="n"><b>{won(r["today"])}</b></span></td>'
-            + chg_cell(r["d1"]) + chg_cell(r["w1"]) + chg_cell(r["m1"])
-            + chg_cell(r["y1"]) + chg_cell(r["avg"]) + f"<td>{badge}</td></tr>"
+            + chg_cell(r["avg"]) + f"<td>{badge}</td>"
+            + chg_cell(r["d1"]) + chg_cell(r["w1"]) + chg_cell(r["m1"]) + chg_cell(r["y1"]) + "</tr>"
         )
     return f'<div class="tw"><table><thead>{head}</thead><tbody>{"".join(body)}</tbody></table></div>'
 
@@ -341,12 +391,12 @@ h3{font-size:13.5px;margin:16px 0 8px;color:var(--sub);font-weight:700}
 .note,.empty{color:var(--sub);font-size:12.5px;margin:10px 0 0}
 .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px;border:1px solid var(--line)}
 table{border-collapse:collapse;width:100%;min-width:780px;font-size:14px}
-th{font-size:12.5px;color:var(--sub);font-weight:700;padding:10px 8px;background:var(--card);white-space:nowrap;text-align:center}
-td{padding:9px 8px;border-top:1px solid var(--line);text-align:center;white-space:nowrap}
+th{font-size:12.5px;color:var(--sub);font-weight:700;padding:10px 6px;background:var(--card);white-space:nowrap;text-align:center}
+td{padding:9px 6px;border-top:1px solid var(--line);text-align:center;white-space:nowrap}
 tbody tr:hover td{background:#FFFAF5}
-td.l{text-align:left;font-weight:700;padding-left:14px}td.u{color:var(--sub);font-size:13px}
-.n{display:inline-block;min-width:6.2em;text-align:right}
-.badge{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px 2px 3px}
+td.l,th.l{text-align:left;font-weight:700;padding-left:14px;position:sticky;left:0;background:#fff;z-index:1;box-shadow:1px 0 0 var(--line)}th.l{background:var(--card)}td.u{color:var(--sub);font-size:13px}
+.n{display:inline-block;min-width:5.2em;text-align:right}
+.badge em{font-style:normal}.lu,.mn{display:none}.badge{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px 2px 3px}
 .face{flex:none;display:block}
 .tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .tc{background:var(--card);border-radius:16px;padding:12px 14px 6px}
@@ -358,7 +408,8 @@ td.l{text-align:left;font-weight:700;padding-left:14px}td.u{color:var(--sub);fon
 .arch a:hover{border-color:var(--acc);color:var(--acc)}
 footer{margin-top:30px;text-align:center;color:var(--sub);font-size:12px;line-height:1.8}
 footer a{color:var(--acc);font-weight:700;text-decoration:none;white-space:nowrap}
-@media (max-width:640px){h1{font-size:20.5px}.hero{padding:18px 16px 14px;border-radius:20px}.kpis{grid-template-columns:repeat(2,1fr)}.kpi .x{font-size:22px}.card{padding:16px 12px 14px}.seg label{padding:7px 18px}}
+@media (max-width:640px){table{min-width:0;font-size:13.5px}td.u,th.u{display:none}.fl{display:none}.mn{display:inline}.lu{display:block;font-size:11.5px;color:var(--sub);font-weight:500;white-space:normal;word-break:keep-all;max-width:9.5em}td.l,th.l{padding-left:10px}.n{min-width:0}.badge{padding:2px}.badge em{display:none}th,td{padding:8px 5px}.bl{font-size:13px;line-height:1.25}.bl small{display:block;font-size:11px;color:var(--sub);font-weight:500}.bt{height:auto;min-height:26px}.v{font-size:12.5px}h1{font-size:20.5px}.hero{padding:18px 16px 14px;border-radius:20px}.kpis{grid-template-columns:repeat(2,1fr)}.kpi .x{font-size:22px}.card{padding:16px 12px 14px}.seg label{padding:7px 18px}}
+@media (max-width:420px){table{font-size:12.5px}th,td{padding:8px 3px}.tw{margin:0 -4px}}
 """
 
 
@@ -521,7 +572,7 @@ def main() -> int:
         return 1
     snap = store.load_snapshot(asof)
     history = store.read_history()
-    recs = build_records(snap, cfg)
+    recs = build_records(snap, cfg, history)
     if not recs:
         print("표시할 품목 없음")
         return 1
