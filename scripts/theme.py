@@ -45,13 +45,11 @@ def face_svg(grade: str, size: int = 18) -> str:
 
 
 LOGO = (
-    '<svg width="38" height="38" viewBox="0 0 48 48" aria-hidden="true">'
-    '<path d="M12 22q12-18 24 0" fill="none" stroke="#B07A3C" stroke-width="3" stroke-linecap="round"/>'
-    '<circle cx="18" cy="19" r="7" fill="#E25C5C"/><path d="M18 12q2-4 5-4" stroke="#6B4A2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
-    '<circle cx="29" cy="18.5" r="6.5" fill="#F0A82E"/><path d="M29 12q3-3 6-1.5q-2.5 3-6 1.5z" fill="#3E9F6E"/>'
-    '<path d="M7 22h34l-3.5 17a3 3 0 0 1-3 2.4h-21a3 3 0 0 1-3-2.4z" fill="#D9995A"/>'
-    '<path d="M9.5 28.5h29M11 34.5h26" stroke="#B07A3C" stroke-width="1.8" stroke-linecap="round"/>'
-    '<circle cx="18" cy="20" r="1.2" fill="#fff" opacity=".7"/></svg>'
+    '<svg width="42" height="42" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1F5F4A"/>'
+    '<path d="M11 20h22l-2.6 12.5a3 3 0 0 1-3 2.5H16.6a3 3 0 0 1-3-2.5z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>'
+    '<path d="M14.5 26h15M15.8 31h12.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>'
+    '<path d="M15 20c0-8 14-8 14 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>'
+    '<circle cx="30" cy="12.5" r="5" fill="#E9B949"/><path d="M30 8.5c1.5-2.5 4-3 5.5-2.5-.8 2.2-3 3.5-5.5 2.5z" fill="#fff"/></svg>'
 )
 
 
@@ -148,8 +146,8 @@ a{{color:inherit}}
 .serif{{font-family:"Noto Serif KR",Pretendard,serif}}
 .wrap{{max-width:1080px;margin:0 auto;padding:0 20px 64px}}
 header{{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:22px 0 14px;border-bottom:1px solid var(--ink)}}
-.brand{{display:flex;align-items:center;gap:11px;text-decoration:none}}.brand b{{font-size:21px;font-weight:800;letter-spacing:-.03em;display:block;line-height:1.2}}
-.brand small{{display:block;font-size:12px;color:var(--sub);font-weight:500;letter-spacing:.02em}}
+.brand{{display:flex;align-items:center;gap:12px;text-decoration:none}}.brand b{{font-size:23px;font-weight:700;letter-spacing:-.02em;display:block;line-height:1.1}}
+.brand small{{display:block;font-size:10.5px;color:var(--gold);font-weight:700;letter-spacing:.2em;margin-top:4px}}
 .meta{{font-size:12.5px;color:var(--sub);text-align:right;line-height:1.5}}.meta b{{color:var(--ink);font-weight:700}}
 .src{{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--sub)}}.src i{{font-style:normal;font-weight:800;color:var(--acc);border:1.5px solid var(--acc);border-radius:4px;padding:0 5px;font-size:11px;letter-spacing:.02em}}
 .hero{{display:grid;grid-template-columns:1.35fr 1fr;gap:28px;padding:30px 0 26px;border-bottom:1px solid var(--line);align-items:start}}
@@ -279,7 +277,7 @@ def shell(title: str, body: str, rel: str, asof: str, fetched: str, extra_meta: 
     out = f"""<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">
 <title>{esc(title)}</title>{FONTS}<style>{CSS}</style></head><body>{icons.sprite()}<div class="wrap">
-<header><a class="brand" href="{rel}index.html">{LOGO}<div><b>과일바구니</b><small>과일·채소 가격 리포트</small></div></a>
+<header><a class="brand" href="{rel}index.html">{LOGO}<div><b class="serif">과일바구니</b><small>FRUIT BASKET · DAILY PRICE</small></div></a>
 <div class="meta"><span class="src"><i>aT</i>{esc(SOURCE_SHORT[4:])}</span><br>조사일 <b>{kdate(asof)}</b> · 갱신 {esc(fetched)}{extra_meta}</div></header>
 {body}
 <footer><span>{esc(SOURCE_LONG)}</span><span>매일 자동 수집·생성 · <a href="{rel}fruitbasket_prices.xlsx">엑셀 받기</a></span></footer>
