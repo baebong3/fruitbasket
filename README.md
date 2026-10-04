@@ -21,6 +21,8 @@ KAMIS Open API(부류별 일별 가격)로 과일·채소 소매·도매 가격�
 | `docs/index.html` | 최신 대시보드 (GitHub Pages 첫 화면, JS 없이도 표시) |
 | `docs/reports/YYYY-MM-DD.html` | 날짜별 보관본 |
 | `docs/items/<품목>-<품종>.html` | 품목별 상세 페이지 - 소매·도매 오늘 가격, 1개월~1년 추이 그래프, 월별 가격, 1년 범위 안의 현재 위치, 개조식 리포트 |
+| `docs/recipes.html` | 오늘의 알뜰 요리 - 주재료가 평년보다 싼 레시피와 재료비(조사 가격 × 수량), 1인분 비용 |
+| `docs/basket.html` | 과일바구니 장바구니 지수 - 4인 가구 1주일 과일·채소 18종 고정 장바구니 비용(평년 = 100), 1년 추이, 국가데이터처 신선식품지수와 비교 |
 | `docs/fruitbasket_prices.xlsx` | 최신 소매·도매 표 + 최근 90일 이력 |
 | `reports/LATEST.md`, `reports/YYYY-MM-DD.md` | GitHub에서 바로 읽는 요약 |
 
@@ -44,6 +46,13 @@ KAMIS Open API(부류별 일별 가격)로 과일·채소 소매·도매 가격�
 - `grade` : 가격 수준 기준 (평년 대비 %) - 앱의 GREEN/YELLOW/ORANGE/RED 기준과 맞춰 조정
 - `rank_priority` : 품목·품종별 대표 등급 우선순위 (상품 → L과 → 특 → 중품 …; 포도처럼 상품 등급이 없는 품목도 빠지지 않음)
 - `trend_days`, `trend_items` : 추이 그래프 기간·품목 수
+
+## 레시피·장바구니·외부 지표 손보기 (`data/`)
+
+- `recipes.yml` : 레시피. 재료는 KAMIS 품목명(+품종)과 수량·단위로 적음. `main: true` 재료가 평년보다 싸면 그날 추천에 오름
+- `staples.yml` : 1개 평균 무게(kg 가격 ↔ 개 수량 환산)와 계란·두부 등 KAMIS 비조사 재료의 참고가
+- `basket.yml` : 장바구니 구성(품목·품종 우선순위·수량). 바꾸면 지수의 과거 추이도 같은 구성으로 다시 계산됨
+- `external.yml` : 국가데이터처 소비자물가동향 수치(전년동월비·전월비). 매월 초 발표되면 값만 고쳐 커밋
 
 ## 로컬 실행
 

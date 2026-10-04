@@ -225,6 +225,28 @@ footer a{{color:var(--acc);font-weight:700;text-decoration:none;white-space:nowr
 @media (max-width:760px){{.hero{{grid-template-columns:1fr;gap:18px}}.kpis{{border-left:0;padding-left:0;border-top:1px solid var(--line)}}.prices{{grid-template-columns:1fr}}.two{{grid-template-columns:1fr}}.ihead h1{{font-size:27px}}}}
 @media (max-width:640px){{.cd{{display:none}}.cm{{display:block}}.wrap{{padding:0 16px 48px}}h1{{font-size:23px}}.kpi .x{{font-size:23px}}table{{min-width:0;font-size:13.5px}}td.u,th.u{{display:none}}.fl{{display:none}}.mn{{display:inline}}.lu{{display:block;font-size:11.5px;color:var(--sub);font-weight:500;white-space:normal;word-break:keep-all;max-width:9.5em}}.n{{min-width:0}}.badge{{padding:2px}}.badge em{{display:none}}th,td{{padding:8px 5px}}.bl{{font-size:13px;line-height:1.25}}.bl small{{display:block;font-size:11px;color:var(--sub);font-weight:500}}.bt{{height:auto;min-height:24px}}.v{{font-size:12.5px}}.seg{{gap:18px}}.mini{{grid-template-columns:repeat(2,1fr)}}.stat{{grid-template-columns:1fr 1fr}}.meta{{text-align:left}}}}
 @media (max-width:420px){{table{{font-size:12.5px}}th,td{{padding:8px 3px}}.tw{{margin:0 -4px}}.pc .big{{font-size:28px}}.tf table{{font-size:12px}}.tf th,.tf td{{padding:7px 2px}}.tf .badge{{padding:1px}}}}
+
+/* 알뜰 요리 · 장바구니 지수 */
+.lead{{font-size:14px;color:var(--sub);margin:4px 0 14px;word-break:keep-all}}
+.rgrid{{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}}.rgrid.full{{grid-template-columns:repeat(2,1fr)}}
+.rc{{border:1px solid var(--line);border-radius:8px;padding:16px 16px 12px;min-width:0}}
+.rc-h{{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}}.rc h3{{font-size:19px;margin:0;color:var(--ink);letter-spacing:-.02em;font-weight:700}}
+.rc-save{{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}}.rc-save.muted{{background:var(--paper);color:var(--sub)}}
+.rc-meta{{font-size:12.5px;color:var(--sub);margin:4px 0 10px}}
+.rt{{min-width:0;font-size:13px}}.rt th{{white-space:nowrap}}.rt th,.rt td{{padding:6px 4px}}.rt td{{white-space:normal}}.rt.compact td.u,.rt.compact th.u{{display:none}}.rt td.l,.rt th.l{{position:static;padding-left:0;white-space:normal;word-break:keep-all}}.rt .n{{min-width:0}}
+.rt td.l small{{display:block;font-size:11px;color:var(--sub);font-weight:500}}.rt .main{{font-size:10.5px;color:var(--acc);font-weight:800;margin-left:4px;vertical-align:1px}}
+.rt tr.st td{{color:var(--sub)}}.rt td.u,.rt th.u{{font-size:12px;color:var(--sub)}}
+.rc-cost{{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;margin:10px 0 4px;color:var(--sub)}}.rc-cost b{{color:var(--ink)}}.rc-cost .sub{{width:100%;font-size:12px}}
+.rc-steps{{margin:10px 0 0;padding-left:20px;font-size:14px;line-height:1.7;word-break:keep-all}}.rc-steps li{{margin-bottom:3px}}
+.rc-season{{font-size:12.5px;color:var(--sub);margin:8px 0 0}}
+.bk{{display:grid;grid-template-columns:1fr 1.6fr;gap:22px;align-items:stretch;margin:6px 0 16px}}
+.bk-main{{background:var(--paper);border-radius:8px;padding:16px 18px}}.bk-main .k{{font-size:13px;color:var(--sub);font-weight:700}}.bk-main .k small{{font-weight:500}}
+.bk-main .x{{font-size:48px;font-weight:800;letter-spacing:-.04em;line-height:1.1;margin:4px 0}}.bk-main .v{{font-size:14px;font-weight:700}}
+.bk-grid{{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}}.bk-grid>div{{border-top:1.5px solid var(--ink);padding-top:8px}}
+.bk-grid .k{{font-size:12.5px;color:var(--sub);font-weight:600}}.x2{{font-size:24px;font-weight:800;letter-spacing:-.03em}}.x2 small{{font-size:12px;color:var(--sub);font-weight:600;margin-left:2px}}
+.cmp{{max-width:640px}}.muted{{color:var(--sub);font-weight:500;font-size:12.5px}}
+@media (max-width:900px){{.rgrid,.rgrid.full{{grid-template-columns:1fr 1fr}}}}
+@media (max-width:640px){{.rgrid,.rgrid.full{{grid-template-columns:1fr}}.bk{{grid-template-columns:1fr}}.bk-main .x{{font-size:40px}}.rt td.u,.rt th.u{{display:none}}}}
 """
 
 

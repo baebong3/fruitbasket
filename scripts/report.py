@@ -20,6 +20,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import store  # noqa: E402
 import items as itemmod  # noqa: E402
+import kitchen  # noqa: E402
+import basket as basketmod  # noqa: E402
+from pricing import PriceBook  # noqa: E402
 from theme import (GRADES, UP, DOWN, ACC, badge, chg_span, esc, face_svg, kdate, mdate, label_of,  # noqa: E402
                    pct, shell, sp, split_name, won, no_dash)
 
@@ -224,7 +227,7 @@ def trends_html(recs_by_cat: dict, history: list[dict], cfg: dict, asof: str, re
 
 
 def page_html(snap: dict, recs_by_cls: dict, s: dict, history: list[dict], cfg: dict,
-              archive: list[str], rel: str, links: dict, used: dict) -> str:
+              archive: list[str], rel: str, links: dict, used: dict, recipes: list[dict], bk: dict) -> str:
     asof = snap["date"]
     g = cfg["grade"]
     rng = {"GREEN": f'{g["green_max"]:+.0f}% 이하', "YELLOW": f'{g["green_max"]:+.0f}~{g["yellow_max"]:+.0f}%',
@@ -263,6 +266,10 @@ def page_html(snap: dict, recs_by_cls: dict, s: dict, history: list[dict], cfg: 
 <div class="kpi"><div class="k">평년보다 비싼 과일</div><div class="x">{s['pricey']:,}<small>/ {s['n_fruit']:,}개</small></div></div>
 <div class="kpi"><div class="k">가장 비싸진 품목</div><div class="x" style="font-size:19px;white-space:normal;word-break:keep-all">{top_txt}</div></div>
 </div></section>
+{basketmod.section_html(bk, rel, links, False)}
+<div class="card" id="kitchen"><h2>오늘의 알뜰 요리<small>평년보다 싼 재료로 · <a href="{rel}recipes.html">레시피 {len(recipes):,}개 모두 보기 ›</a></small></h2>
+<p class="lead">주재료가 평년보다 싼 요리 {sum(1 for r in recipes if r["pick"]):,}가지 중 재료비 절약률이 큰 순. 비용은 KAMIS 소매 가격으로 계산한 농산물 재료비이고, 계란·두부 등은 참고가</p>
+<div class="rgrid">{"".join(kitchen.recipe_card(r, rel, links, False) for r in recipes[:3])}</div></div>
 <div class="tabs">{''.join(inputs)}<div class="seg">{''.join(labels)}</div>{''.join(panels)}</div>
 <div class="card"><h2>지난 리포트<small>날짜를 누르면 그날 리포트</small></h2><ul class="arch">{arch}</ul></div>"""
     fetched = snap.get("fetched_at", "")[:16].replace("T", " ")
@@ -384,10 +391,23 @@ def main() -> int:
     archive = sorted({p.stem for p in (DOCS / "reports").glob("*.html")} | {asof}, reverse=True)
 
     links, n_items = itemmod.build_item_pages(snap, cfg, history, fetched)
-    idx = page_html(snap, recs, s, history, cfg, archive, "", links, used)
-    arc = page_html(snap, recs, s, history, cfg, archive, "../", links, used)
+    book = PriceBook(snap, cfg, itemmod.series_index(history))
+    recipes = kitchen.compute_recipes(book, cfg["grade"])
+    bk = basketmod.build(book, history, asof)
+    idx = page_html(snap, recs, s, history, cfg, archive, "", links, used, recipes, bk)
+    arc = page_html(snap, recs, s, history, cfg, archive, "../", links, used, recipes, bk)
+    picks = [r for r in recipes if r["pick"]]
+    others = [r for r in recipes if not r["pick"]]
+    rec_body = (f'<div class="card"><h2>오늘의 알뜰 요리<small>{esc(kdate(asof))} KAMIS 소매 가격 기준</small></h2>'
+                f'<p class="lead">주재료가 평년보다 싼 요리 {len(picks):,}가지. 재료비는 조사 가격 × 레시피 수량으로 계산하고, '
+                f'계란·두부·고기 등 조사하지 않는 재료는 참고가(data/staples.yml)로 더함. 기본 양념은 비용에서 제외</p>'
+                f'<div class="rgrid full">{"".join(kitchen.recipe_card(r, "", links, True) for r in picks)}</div></div>'
+                + (f'<div class="card"><h2>오늘은 평년 수준이거나 비싼 재료<small>주재료 가격 수준 보통 이상</small></h2>'
+                   f'<div class="rgrid full">{"".join(kitchen.recipe_card(r, "", links, True) for r in others)}</div></div>' if others else ""))
+    rec_html = shell("오늘의 알뜰 요리 - 과일바구니", rec_body, "", asof, fetched)
+    bk_html = shell("과일바구니 장바구니 지수", basketmod.section_html(bk, "", links, True), "", asof, fetched)
     n_bars = sum(1 for cats in recs.values() for rs in cats.values() for r in rs if r["base"] is not None)
-    errs = verify(idx, n_bars)
+    errs = verify(idx, n_bars) + verify(rec_html, None, "recipes") + verify(bk_html, None, "basket")
     for p in sorted((DOCS / "items").glob("*.html")):
         errs += verify(p.read_text(encoding="utf-8"), None, p.stem)
     if errs:
@@ -396,12 +416,14 @@ def main() -> int:
 
     (DOCS / "index.html").write_text(idx, encoding="utf-8")
     (DOCS / "reports" / f"{asof}.html").write_text(arc, encoding="utf-8")
+    (DOCS / "recipes.html").write_text(rec_html, encoding="utf-8")
+    (DOCS / "basket.html").write_text(bk_html, encoding="utf-8")
     (DOCS / ".nojekyll").write_text("", encoding="utf-8")
     md = markdown(snap, recs, s)
     (REPORTS / f"{asof}.md").write_text(md, encoding="utf-8")
     (REPORTS / "LATEST.md").write_text(md, encoding="utf-8")
     excel(DOCS / "fruitbasket_prices.xlsx", recs, history, asof, cfg)
-    print(f"리포트 생성 {asof}: {s['headline']} (품목 페이지 {n_items:,}개)")
+    print(f"리포트 생성 {asof}: {s['headline']} (품목 페이지 {n_items:,}개, 알뜰 요리 {len(picks):,}개, 장바구니 지수 {bk['idx_avg_all']})")
     return 0
 
 

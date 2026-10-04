@@ -1,0 +1,511 @@
+# 알뜰 요리 레시피 - KAMIS 조사 품목으로 만드는 집밥
+# item: KAMIS 품목명, kind: 품종(비우면 가장 싼 품종 자동), qty + unit(g|개|포기|장|대|쪽|줌)
+# main: true 인 재료가 그날 평년보다 싸야 추천 후보에 오름. staples 는 data/staples.yml 의 참고가 사용
+# 1개 무게 등 환산 기준은 data/staples.yml 의 piece_g
+
+- name: 오이무침
+  servings: 2
+  time: 10분
+  tags: [반찬, 불 없이]
+  ingredients:
+    - {item: 오이, qty: 2, unit: 개, main: true}
+    - {item: 파, kind: 대파, qty: 30, unit: g}
+    - {item: 깐마늘(국산), qty: 2, unit: 쪽}
+    - {item: 고춧가루, kind: 국산, qty: 10, unit: g}
+  seasoning: [식초, 설탕, 소금, 참기름, 통깨]
+  steps:
+    - 오이를 어슷하게 썰어 소금 약간에 10분 절인 뒤 물기를 짬
+    - 대파·마늘을 다지고 고춧가루·식초·설탕을 섞어 양념을 만듦
+    - 오이에 양념을 넣고 버무린 뒤 참기름·통깨로 마무리
+
+- name: 오이냉국
+  servings: 2
+  time: 10분
+  tags: [국, 불 없이]
+  ingredients:
+    - {item: 오이, qty: 1, unit: 개, main: true}
+    - {item: 양파, qty: 50, unit: g}
+    - {item: 풋고추, kind: 청양고추, qty: 1, unit: 개}
+  seasoning: [식초, 설탕, 소금, 국간장, 통깨, 얼음]
+  steps:
+    - 오이·양파를 채 썰고 청양고추는 송송 썲
+    - 찬물 2컵에 식초·설탕·소금·국간장으로 간을 맞춤
+    - 채소를 넣고 얼음을 띄워 냄
+
+- name: 시금치나물
+  servings: 3
+  time: 15분
+  tags: [반찬, 나물]
+  ingredients:
+    - {item: 시금치, qty: 300, unit: g, main: true}
+    - {item: 깐마늘(국산), qty: 2, unit: 쪽}
+    - {item: 파, kind: 대파, qty: 20, unit: g}
+  seasoning: [국간장, 참기름, 소금, 통깨]
+  steps:
+    - 끓는 물에 소금을 넣고 시금치를 30초만 데쳐 찬물에 헹군 뒤 물기를 짬
+    - 다진 마늘·대파, 국간장, 참기름, 소금으로 조물조물 무침
+    - 통깨를 뿌려 냄
+
+- name: 열무김치
+  servings: 6
+  time: 40분 + 숙성
+  tags: [김치, 저장]
+  ingredients:
+    - {item: 열무, qty: 1000, unit: g, main: true}
+    - {item: 파, kind: 쪽파, qty: 100, unit: g}
+    - {item: 양파, qty: 100, unit: g}
+    - {item: 깐마늘(국산), qty: 30, unit: g}
+    - {item: 생강, qty: 5, unit: g}
+    - {item: 고춧가루, kind: 국산, qty: 40, unit: g}
+  seasoning: [굵은소금, 밀가루풀, 액젓, 설탕]
+  steps:
+    - 열무를 4cm 길이로 잘라 굵은소금에 30분 절이고 살살 헹굼
+    - 밀가루풀에 고춧가루·마늘·생강·액젓·설탕을 섞고 양파는 갈아 넣음
+    - 열무·쪽파에 양념을 가볍게 버무려 실온에 반나절 둔 뒤 냉장 보관
+
+- name: 얼갈이된장국
+  servings: 3
+  time: 20분
+  tags: [국]
+  ingredients:
+    - {item: 얼갈이배추, qty: 300, unit: g, main: true}
+    - {item: 파, kind: 대파, qty: 30, unit: g}
+    - {item: 깐마늘(국산), qty: 2, unit: 쪽}
+    - {item: 풋고추, kind: 청양고추, qty: 1, unit: 개}
+  staples: [{name: 두부, qty: 0.5, unit: 모}]
+  seasoning: [된장, 멸치육수 또는 물 4컵]
+  steps:
+    - 얼갈이를 끓는 물에 살짝 데쳐 찬물에 헹구고 4cm로 썲
+    - 육수에 된장을 풀고 얼갈이·마늘을 넣어 10분 끓임
+    - 두부·대파·청양고추를 넣고 한소끔 더 끓임
+
+- name: 상추겉절이
+  servings: 3
+  time: 10분
+  tags: [반찬, 불 없이]
+  ingredients:
+    - {item: 상추, kind: 청, qty: 200, unit: g, main: true}
+    - {item: 파, kind: 대파, qty: 20, unit: g}
+    - {item: 깐마늘(국산), qty: 1, unit: 쪽}
+    - {item: 고춧가루, kind: 국산, qty: 8, unit: g}
+  seasoning: [액젓, 설탕, 식초, 참기름, 통깨]
+  steps:
+    - 상추를 씻어 물기를 털고 먹기 좋게 뜯음
+    - 고춧가루·액젓·설탕·식초·다진 마늘·대파를 섞어 양념을 만듦
+    - 먹기 직전에 양념을 넣고 살살 버무려 참기름·통깨로 마무리
+
+- name: 애호박볶음
+  servings: 3
+  time: 15분
+  tags: [반찬]
+  ingredients:
+    - {item: 호박, kind: 애호박, qty: 1, unit: 개, main: true}
+    - {item: 양파, qty: 100, unit: g}
+    - {item: 파, kind: 대파, qty: 20, unit: g}
+    - {item: 깐마늘(국산), qty: 2, unit: 쪽}
+  seasoning: [새우젓, 식용유, 참기름, 통깨]
+  steps:
+    - 애호박은 반달 모양, 양파는 채 썲
+    - 기름 두른 팬에 마늘을 볶다 애호박·양파를 넣고 중불에 볶음
+    - 새우젓으로 간하고 대파·참기름·통깨를 넣어 마무리
+
+- name: 애호박된장찌개
+  servings: 3
+  time: 20분
+  tags: [찌개]
+  ingredients:
+    - {item: 호박, kind: 애호박, qty: 0.5, unit: 개, main: true}
+    - {item: 양파, qty: 100, unit: g}
+    - {item: 풋고추, kind: 청양고추, qty: 1, unit: 개}
+    - {item: 파, kind: 대파, qty: 30, unit: g}
+    - {item: 깐마늘(국산), qty: 2, unit: 쪽}
+  staples: [{name: 두부, qty: 0.5, unit: 모}]
+  seasoning: [된장, 고춧가루 약간, 멸치육수 3컵]
+  steps:
+    - 육수에 된장을 풀고 양파·마늘을 넣어 끓임
+    - 애호박·두부를 넣고 5분 끓임
+    - 대파·청양고추를 넣고 한소끔 더 끓임
+
+- name: 호박전
+  servings: 3
+  time: 20분
+  tags: [전, 반찬]
+  ingredients:
+    - {item: 호박, kind: 애호박, qty: 1, unit: 개, main: true}
+  staples: [{name: 계란, qty: 2, unit: 개}, {name: 부침가루, qty: 50, unit: g}]
+  seasoning: [소금, 식용유]
+  steps:
+    - 애호박을 0.5cm 두께로 썰어 소금을 살짝 뿌려 둠
+    - 부침가루를 묻히고 풀어 둔 계란옷을 입힘
+    - 기름 두른 팬에 중약불로 앞뒤를 노릇하게 부침
+
+- name: 브로콜리마늘볶음
+  servings: 2
+  time: 10분
+  tags: [반찬]
+  ingredients:
+    - {item: 브로콜리, qty: 1, unit: 개, main: true}
+    - {item: 깐마늘(국산), qty: 4, unit: 쪽}
+  seasoning: [올리브유, 소금, 후추]
+  steps:
+    - 브로콜리를 한입 크기로 잘라 끓는 물에 1분 데침
+    - 올리브유에 편 마늘을 볶아 향을 내고 브로콜리를 넣어 1~2분 볶음
+    - 소금·후추로 간함
+
+- name: 당근라페
+  servings: 3
+  time: 15분
+  tags: [샐러드, 불 없이]
+  ingredients:
+    - {item: 당근, qty: 2, unit: 개, main: true}
+    - {item: 레몬, qty: 0.5, unit: 개}
+  seasoning: [올리브유, 홀그레인머스터드, 설탕, 소금, 후추]
+  steps:
+    - 당근을 가늘게 채 썰어 소금을 뿌리고 10분 두었다 물기를 짬
+    - 레몬즙·올리브유·머스터드·설탕·후추를 섞어 드레싱을 만듦
+    - 당근에 드레싱을 버무려 30분 재운 뒤 냄
+
+- name: 토마토달걀볶음
+  servings: 2
+  time: 10분
+  tags: [반찬, 한 그릇]
+  ingredients:
+    - {item: 토마토, qty: 400, unit: g, main: true}
+    - {item: 파, kind: 대파, qty: 30, unit: g}
+  staples: [{name: 계란, qty: 3, unit: 개}]
+  seasoning: [식용유, 소금, 설탕 약간, 굴소스]
+  steps:
+    - 토마토는 한입 크기로 썰고 계란은 소금 약간 넣어 풀어 둠
+    - 기름 두른 팬에 계란을 부드럽게 스크램블해 덜어 둠
+    - 같은 팬에 대파·토마토를 볶다 계란을 넣고 굴소스·설탕으로 간함
+
+- name: 방울토마토 마리네이드
+  servings: 3
+  time: 15분 + 재우기
+  tags: [샐러드, 불 없이]
+  ingredients:
+    - {item: 방울토마토, qty: 500, unit: g, main: true}
+    - {item: 양파, qty: 50, unit: g}
+    - {item: 레몬, qty: 0.5, unit: 개}
+  seasoning: [올리브유, 발사믹식초, 꿀, 소금, 후추, 바질]
+  steps:
+    - 방울토마토는 십자로 칼집을 내 끓는 물에 10초 데쳐 껍질을 벗김
+    - 다진 양파, 레몬즙, 올리브유, 발사믹, 꿀, 소금·후추를 섞음
+    - 토마토에 부어 냉장고에서 2시간 이상 재움
+
+- name: 배추전
+  servings: 3
+  time: 20분
+  tags: [전]
+  ingredients:
+    - {item: 알배기배추, qty: 0.5, unit: 포기, main: true}
+    - {item: 풋고추, kind: 청양고추, qty: 1, unit: 개}
+  staples: [{name: 부침가루, qty: 100, unit: g}]
+  seasoning: [식용유, 간장, 식초]
+  steps:
+    - 배추 잎을 한 장씩 떼어 줄기 부분을 칼등으로 두드려 펴 줌
+    - 부침가루를 물에 묽게 풀어 배추를 담갔다 꺼냄
+    - 기름 두른 팬에 노릇하게 부치고 초간장을 곁들임
+
+- name: 배추된장국
+  servings: 4
+  time: 25분
+  tags: [국]
+  ingredients:
+    - {item: 배추, qty: 600, unit: g, main: true}
+    - {item: 파, kind: 대파, qty: 30, unit: g}
+    - {item: 깐마늘(국산), qty: 3, unit: 쪽}
+  seasoning: [된장, 멸치육수 5컵, 국간장]
+  steps:
+    - 배추를 한입 크기로 썰어 끓는 물에 살짝 데침
+    - 육수에 된장을 풀고 배추·마늘을 넣어 15분 끓임
+    - 대파를 넣고 국간장으로 간을 맞춤
+
+- name: 양배추쌈과 강된장
+  servings: 3
+  time: 20분
+  tags: [쌈, 반찬]
+  ingredients:
+    - {item: 양배추, qty: 0.5, unit: 포기, main: true}
+    - {item: 양파, qty: 100, unit: g}
+    - {item: 풋고추, kind: 청양고추, qty: 2, unit: 개}
+    - {item: 호박, kind: 애호박, qty: 0.3, unit: 개}
+    - {item: 깐마늘(국산), qty: 2, unit: 쪽}
+  seasoning: [된장, 고추장, 참기름, 물 1컵]
+  steps:
+    - 양배추를 잎째 찜기에 7분 쪄서 식힘
+    - 양파·애호박·청양고추·마늘을 잘게 다져 된장·고추장과 함께 자작하게 끓임
+    - 찐 양배추에 밥과 강된장을 올려 쌈으로 먹음
+
+- name: 무생채
+  servings: 4
+  time: 15분
+  tags: [반찬, 불 없이]
+  ingredients:
+    - {item: 무, qty: 0.5, unit: 개, main: true}
+    - {item: 파, kind: 쪽파, qty: 30, unit: g}
+    - {item: 깐마늘(국산), qty: 2, unit: 쪽}
+    - {item: 고춧가루, kind: 국산, qty: 15, unit: g}
+  seasoning: [소금, 설탕, 식초, 액젓, 통깨]
+  steps:
+    - 무를 가늘게 채 썰어 소금에 10분 절이고 물기를 짬
+    - 고춧가루를 먼저 넣어 색을 입힌 뒤 마늘·액젓·설탕·식초를 넣음
+    - 쪽파를 넣고 버무려 통깨로 마무리
+
+- name: 소고기무국
+  servings: 4
+  time: 30분
+  tags: [국]
+  ingredients:
+    - {item: 무, qty: 0.4, unit: 개, main: true}
+    - {item: 파, kind: 대파, qty: 40, unit: g}
+    - {item: 깐마늘(국산), qty: 2, unit: 쪽}
+  staples: [{name: 소고기(국거리), qty: 150, unit: g}]
+  seasoning: [국간장, 참기름, 소금, 물 6컵]
+  steps:
+    - 참기름에 소고기를 볶다 나박 썬 무를 넣고 함께 볶음
+    - 물을 붓고 마늘을 넣어 15분 끓임
+    - 국간장·소금으로 간하고 대파를 넣음
+
+- name: 가지볶음
+  servings: 3
+  time: 15분
+  tags: [반찬]
+  ingredients:
+    - {item: 가지, qty: 3, unit: 개, main: true}
+    - {item: 파, kind: 대파, qty: 30, unit: g}
+    - {item: 깐마늘(국산), qty: 2, unit: 쪽}
+    - {item: 풋고추, kind: 청양고추, qty: 1, unit: 개}
+  seasoning: [간장, 굴소스, 설탕, 식용유, 참기름]
+  steps:
+    - 가지를 길게 4등분해 어슷 썰고 전자레인지에 2분 돌려 숨을 죽임
+    - 기름에 마늘·대파를 볶아 향을 내고 가지를 넣어 센불에 볶음
+    - 간장·굴소스·설탕으로 간하고 청양고추·참기름으로 마무리
+
+- name: 깻잎장아찌
+  servings: 6
+  time: 15분 + 숙성
+  tags: [저장, 반찬]
+  ingredients:
+    - {item: 깻잎, qty: 100, unit: g, main: true}
+    - {item: 양파, qty: 50, unit: g}
+    - {item: 풋고추, kind: 청양고추, qty: 2, unit: 개}
+    - {item: 붉은고추, qty: 1, unit: 개}
+    - {item: 깐마늘(국산), qty: 3, unit: 쪽}
+  seasoning: [간장 1컵, 물 1컵, 식초 1/2컵, 설탕 1/2컵]
+  steps:
+    - 간장·물·식초·설탕을 끓여 식힘
+    - 깻잎을 씻어 물기를 말리고 다진 양파·고추·마늘을 켜켜이 끼움
+    - 식힌 간장물을 부어 하루 숙성
+
+- name: 부추전
+  servings: 2
+  time: 15분
+  tags: [전]
+  ingredients:
+    - {item: 부추, qty: 200, unit: g, main: true}
+    - {item: 풋고추, kind: 청양고추, qty: 1, unit: 개}
+    - {item: 붉은고추, qty: 1, unit: 개}
+  staples: [{name: 부침가루, qty: 100, unit: g}]
+  seasoning: [식용유, 초간장]
+  steps:
+    - 부추를 5cm로 썰고 고추는 송송 썲
+    - 부침가루를 찬물에 묽게 풀고 부추·고추를 섞음
+    - 기름 넉넉히 두른 팬에 얇게 펴서 바삭하게 부침
+
+- name: 미나리무침
+  servings: 3
+  time: 10분
+  tags: [반찬, 나물]
+  ingredients:
+    - {item: 미나리, qty: 200, unit: g, main: true}
+    - {item: 깐마늘(국산), qty: 1, unit: 쪽}
+    - {item: 고춧가루, kind: 국산, qty: 8, unit: g}
+  seasoning: [식초, 설탕, 액젓, 참기름, 통깨]
+  steps:
+    - 미나리를 끓는 물에 20초 데쳐 찬물에 헹구고 4cm로 썲
+    - 고춧가루·식초·설탕·액젓·마늘로 양념해 무침
+    - 참기름·통깨로 마무리
+
+- name: 파무침
+  servings: 3
+  time: 10분
+  tags: [반찬, 불 없이]
+  ingredients:
+    - {item: 파, kind: 쪽파, qty: 200, unit: g, main: true}
+    - {item: 고춧가루, kind: 국산, qty: 10, unit: g}
+  seasoning: [간장, 식초, 설탕, 참기름, 통깨]
+  steps:
+    - 쪽파를 5cm로 썰어 찬물에 5분 담가 매운맛을 뺌
+    - 고춧가루·간장·식초·설탕을 섞어 양념을 만듦
+    - 물기 뺀 파에 양념을 넣고 가볍게 무침
+
+- name: 가을 과일 샐러드
+  servings: 2
+  time: 10분
+  tags: [디저트, 불 없이]
+  ingredients:
+    - {item: 포도, kind: 샤인머스켓, qty: 300, unit: g, main: true}
+    - {item: 감귤, qty: 3, unit: 개}
+    - {item: 사과, qty: 1, unit: 개}
+  staples: [{name: 플레인요거트, qty: 1, unit: 개}]
+  seasoning: [꿀, 레몬즙 약간]
+  steps:
+    - 포도는 알을 떼고 감귤은 속껍질째 분리, 사과는 껍질째 한입 크기로 썲
+    - 요거트에 꿀·레몬즙을 섞어 드레싱을 만듦
+    - 과일에 드레싱을 올려 냄
+
+- name: 레몬청
+  servings: 10
+  time: 30분 + 숙성
+  tags: [저장, 음료]
+  ingredients:
+    - {item: 레몬, qty: 10, unit: 개, main: true}
+  staples: [{name: 설탕, qty: 1000, unit: g}]
+  seasoning: [베이킹소다(세척용)]
+  steps:
+    - 레몬을 베이킹소다로 문질러 씻고 끓는 물에 10초 굴려 소독
+    - 얇게 슬라이스해 씨를 빼고 설탕과 1:1로 켜켜이 담음
+    - 실온에 하루 두어 설탕이 녹으면 냉장 보관, 탄산수·따뜻한 물에 타서 마심
+
+- name: 사과 코울슬로
+  servings: 3
+  time: 15분
+  tags: [샐러드, 불 없이]
+  ingredients:
+    - {item: 양배추, qty: 0.25, unit: 포기, main: true}
+    - {item: 당근, qty: 0.5, unit: 개}
+    - {item: 사과, qty: 0.5, unit: 개}
+  seasoning: [마요네즈, 식초, 설탕, 소금, 후추]
+  steps:
+    - 양배추·당근·사과를 가늘게 채 썰고 소금을 뿌려 10분 둔 뒤 물기를 짬
+    - 마요네즈·식초·설탕·후추를 섞어 드레싱을 만듦
+    - 채소에 버무려 냉장고에서 30분 차게 둠
+
+- name: 바나나 스무디
+  servings: 2
+  time: 5분
+  tags: [음료, 불 없이]
+  ingredients:
+    - {item: 바나나, qty: 2, unit: 개, main: true}
+  staples: [{name: 우유, qty: 300, unit: ml}]
+  seasoning: [꿀, 얼음]
+  steps:
+    - 바나나를 토막 내 우유·꿀·얼음과 함께 블렌더에 넣음
+    - 곱게 갈아 바로 마심
+
+- name: 파인애플볶음밥
+  servings: 2
+  time: 20분
+  tags: [한 그릇]
+  ingredients:
+    - {item: 파인애플, qty: 0.25, unit: 개, main: true}
+    - {item: 양파, qty: 100, unit: g}
+    - {item: 당근, qty: 0.3, unit: 개}
+    - {item: 파, kind: 대파, qty: 30, unit: g}
+  staples: [{name: 계란, qty: 2, unit: 개}, {name: 밥, qty: 2, unit: 공기}]
+  seasoning: [식용유, 간장, 굴소스, 후추]
+  steps:
+    - 파인애플·양파·당근을 잘게 썰고 계란은 스크램블해 둠
+    - 기름에 대파를 볶아 향을 내고 양파·당근을 볶은 뒤 밥을 넣어 고슬하게 볶음
+    - 파인애플·계란을 넣고 간장·굴소스·후추로 간함
+
+- name: 아보카도 토스트
+  servings: 1
+  time: 10분
+  tags: [아침, 한 그릇]
+  ingredients:
+    - {item: 아보카도, qty: 1, unit: 개, main: true}
+    - {item: 레몬, qty: 0.25, unit: 개}
+    - {item: 방울토마토, qty: 60, unit: g}
+  staples: [{name: 식빵, qty: 2, unit: 장}, {name: 계란, qty: 1, unit: 개}]
+  seasoning: [소금, 후추, 올리브유]
+  steps:
+    - 아보카도를 으깨 레몬즙·소금·후추를 섞음
+    - 구운 식빵에 아보카도를 바르고 반 자른 방울토마토를 올림
+    - 반숙 계란프라이를 얹고 올리브유를 두름
+
+- name: 피망 돼지고기 볶음
+  servings: 3
+  time: 20분
+  tags: [반찬, 메인]
+  ingredients:
+    - {item: 피망, qty: 200, unit: g, main: true}
+    - {item: 파프리카, qty: 1, unit: 개}
+    - {item: 양파, qty: 100, unit: g}
+    - {item: 깐마늘(국산), qty: 2, unit: 쪽}
+  staples: [{name: 돼지고기(앞다리), qty: 200, unit: g}]
+  seasoning: [간장, 굴소스, 설탕, 후추, 식용유, 전분]
+  steps:
+    - 돼지고기를 채 썰어 간장·후추·전분에 10분 재움
+    - 기름에 마늘을 볶다 고기를 넣어 익히고 양파·피망·파프리카를 넣어 센불에 볶음
+    - 굴소스·설탕으로 간함
+
+- name: 꽈리고추 멸치볶음
+  servings: 4
+  time: 15분
+  tags: [반찬, 저장]
+  ingredients:
+    - {item: 풋고추, kind: 꽈리고추, qty: 200, unit: g, main: true}
+    - {item: 깐마늘(국산), qty: 3, unit: 쪽}
+  staples: [{name: 잔멸치, qty: 60, unit: g}]
+  seasoning: [간장, 올리고당, 식용유, 참기름, 통깨]
+  steps:
+    - 꽈리고추는 꼭지를 떼고 이쑤시개로 구멍을 냄
+    - 마른 팬에 멸치를 볶아 비린내를 날리고 덜어 둠
+    - 기름에 마늘·꽈리고추를 볶다 멸치·간장·올리고당을 넣고 참기름·통깨로 마무리
+
+- name: 풋고추 된장무침
+  servings: 4
+  time: 10분
+  tags: [반찬, 불 없이]
+  ingredients:
+    - {item: 풋고추, kind: 풋고추(녹광 등), qty: 200, unit: g, main: true}
+    - {item: 깐마늘(국산), qty: 2, unit: 쪽}
+    - {item: 파, kind: 대파, qty: 20, unit: g}
+  seasoning: [된장, 고추장, 참기름, 올리고당, 통깨]
+  steps:
+    - 풋고추를 어슷 썰거나 통째로 씻어 물기를 뺌
+    - 된장·고추장·다진 마늘·대파·참기름·올리고당을 섞음
+    - 고추에 양념을 버무리거나 찍어 먹음
+
+- name: 멜론 요거트볼
+  servings: 2
+  time: 5분
+  tags: [디저트, 아침, 불 없이]
+  ingredients:
+    - {item: 멜론, qty: 0.5, unit: 개, main: true}
+    - {item: 바나나, qty: 1, unit: 개}
+  staples: [{name: 플레인요거트, qty: 1, unit: 개}, {name: 그래놀라, qty: 40, unit: g}]
+  seasoning: [꿀]
+  steps:
+    - 멜론은 씨를 빼고 숟가락으로 둥글게 떠냄
+    - 그릇에 요거트를 담고 멜론·바나나·그래놀라를 올림
+    - 꿀을 뿌려 냄
+
+- name: 수박화채
+  servings: 4
+  time: 10분
+  tags: [디저트, 불 없이]
+  ingredients:
+    - {item: 수박, qty: 0.25, unit: 개, main: true}
+  staples: [{name: 우유, qty: 300, unit: ml}]
+  seasoning: [설탕 또는 사이다, 얼음]
+  steps:
+    - 수박 과육을 한입 크기로 떠냄
+    - 우유(또는 사이다)에 설탕을 녹여 수박에 붓고 얼음을 넣음
+
+- name: 알배기배추 겉절이
+  servings: 4
+  time: 20분
+  tags: [김치, 불 없이]
+  ingredients:
+    - {item: 알배기배추, qty: 1, unit: 포기, main: true}
+    - {item: 파, kind: 쪽파, qty: 50, unit: g}
+    - {item: 깐마늘(국산), qty: 3, unit: 쪽}
+    - {item: 고춧가루, kind: 국산, qty: 30, unit: g}
+  seasoning: [액젓, 설탕, 소금, 통깨, 참기름]
+  steps:
+    - 배추를 한입 크기로 잘라 소금에 20분 절인 뒤 헹굼
+    - 고춧가루·액젓·설탕·마늘을 섞어 양념을 만듦
+    - 배추·쪽파에 양념을 버무리고 참기름·통깨로 마무리

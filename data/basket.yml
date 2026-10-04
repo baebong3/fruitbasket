@@ -1,0 +1,26 @@
+# 과일바구니 장바구니 지수 - 4인 가구 1주일 과일·채소 장바구니 (소매 가격 기준)
+# kind 를 목록으로 적으면 앞에서부터 그날 조사된 품종을 씀 (계절 품종 교체 대응)
+# 수량은 KAMIS 가격 단위와 무관하게 적고, 환산은 data/staples.yml 의 piece_g 를 씀
+# 지수 = 오늘 장바구니 비용 / 평년 가격으로 산 비용 × 100 (평년 = 100)
+
+name: 과일바구니 장바구니
+household: 4인 가구 1주일
+items:
+  - {item: 사과, kind: [후지, 홍로], qty: 5, unit: 개, group: 과일}
+  - {item: 배, qty: 2, unit: 개, group: 과일}
+  - {item: 감귤, kind: [노지, 시설], qty: 10, unit: 개, group: 과일}
+  - {item: 바나나, qty: 600, unit: g, group: 과일}
+  - {item: 포도, kind: [캠벨얼리, 거봉, 샤인머스켓], qty: 1000, unit: g, group: 과일}
+  - {item: 토마토, qty: 1000, unit: g, group: 과일}
+  - {item: 배추, qty: 1, unit: 포기, group: 채소}
+  - {item: 무, qty: 1, unit: 개, group: 채소}
+  - {item: 양파, qty: 1000, unit: g, group: 채소}
+  - {item: 파, kind: 대파, qty: 500, unit: g, group: 채소}
+  - {item: 깐마늘(국산), qty: 200, unit: g, group: 채소}
+  - {item: 오이, kind: [다다기계통, 가시계통, 취청], qty: 5, unit: 개, group: 채소}
+  - {item: 호박, kind: 애호박, qty: 2, unit: 개, group: 채소}
+  - {item: 상추, kind: [청, 적], qty: 200, unit: g, group: 채소}
+  - {item: 시금치, qty: 300, unit: g, group: 채소}
+  - {item: 당근, qty: 500, unit: g, group: 채소}
+  - {item: 풋고추, kind: [풋고추(녹광 등), 오이맛고추], qty: 100, unit: g, group: 채소}
+  - {item: 양배추, qty: 1, unit: 포기, group: 채소}

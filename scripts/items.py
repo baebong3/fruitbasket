@@ -123,6 +123,9 @@ def line_chart(points: list[tuple[str, int]], color: str, ref: int | None, ref_n
 
     # 라벨 : 최고, 최저, 현재, 평년 - 다른 라벨·선·축과 겹치지 않는 자리를 고름 (모두 겹치면 가장 덜 겹치는 자리)
     placed: list[tuple[float, float, float, float]] = []
+    for t in ticks:  # 오른쪽 눈금 숫자 자리도 피함
+        ty = y_of(t)
+        placed.append((W - R + 8, ty - 8, W, ty + 6))
     samples = []
     for i in range(1, n):  # 선 위의 점을 촘촘히 표본화
         for t in (0.0, 0.25, 0.5, 0.75):
@@ -178,7 +181,21 @@ def line_chart(points: list[tuple[str, int]], color: str, ref: int | None, ref_n
         out.append(f'<circle cx="{xs[i_lo]:.1f}" cy="{ys[i_lo]:.1f}" r="3.2" fill="#fff" stroke="{color}" stroke-width="2"/>')
         put(xs[i_lo], ys[i_lo], f"최저 {vals[i_lo]:,}", "below", "lab sub")
     if ref is not None:
-        put(L + 2, y_of(ref) + 6, f"{ref_name} {ref:,}", "above", "lab sub")
+        ry = y_of(ref)
+        txt = f"{ref_name} {ref:,}"
+        # 기준선 라벨 : 왼쪽 위 -> 왼쪽 아래 -> 오른쪽 위 -> 오른쪽 아래 중 겹치지 않는 자리
+        best, best_pen = None, 1e9
+        for cx, cy, anc in ((L + 2, ry - 5, "start"), (L + 2, ry + 14, "start"), (W - R + 2, ry - 5, "end"), (W - R + 2, ry + 14, "end"),
+                            (W / 2, ry - 5, "middle"), (W / 2, ry + 14, "middle")):
+            bx = box_of(cx, cy, txt, anc)
+            pen = penalty(bx)
+            if pen < best_pen:
+                best, best_pen = (cx, cy, anc, bx), pen
+            if pen == 0:
+                break
+        cx, cy, anc, bx = best
+        placed.append(bx)
+        out.append(f'<text x="{cx:.1f}" y="{cy:.1f}" class="lab sub" text-anchor="{anc}">{txt}</text>')
     out.append("</svg>")
     return "".join(out)
 
