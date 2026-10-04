@@ -24,6 +24,7 @@ import kitchen  # noqa: E402
 import basket as basketmod  # noqa: E402
 import shopping  # noqa: E402
 from pricing import PriceBook  # noqa: E402
+import icons  # noqa: E402
 from theme import (GRADES, UP, DOWN, ACC, badge, chg_span, esc, face_svg, kdate, mdate, label_of,  # noqa: E402
                    pct, shell, sp, split_name, won, no_dash)
 
@@ -146,7 +147,7 @@ def bars_html(recs: list[dict], rel: str, links: dict) -> str:
         mark = "" if r["base_key"] == "avg" else '<sup title="평년가 없음, 1년 전 대비">*</sup>'
         sub = f'<small>{esc(r["kind"])}</small>' if r["kind"] else ""
         href = item_href(r, rel, links)
-        full = f'<span class="fl">{esc(r["label"])}{mark}</span><span class="mn">{esc(r["name"])}{mark}{sub}</span>'
+        full = f'{icons.item_icon(r["name"], 20)}<span class="fl">{esc(r["label"])}{mark}</span><span class="mn">{esc(r["name"])}{mark}{sub}</span>'
         lab = f'<a href="{href}">{full}</a>' if href else full
         rows.append(f'<div class="bl">{lab}</div><div class="bt"><div class="neg">{neg}</div><div class="pos">{pos}</div></div>')
     note = '<p class="note">* 평년가가 없어 1년 전 가격과 비교</p>' if any(r["base_key"] != "avg" for r in rs) else ""
@@ -160,7 +161,7 @@ def table_html(recs: list[dict], rel: str, links: dict) -> str:
     body = []
     for r in rs:
         sub = " · ".join(x for x in (r["kind"], r["unit"]) if x)
-        inner = f'<span class="fl">{esc(r["label"])}</span><span class="mn">{esc(r["name"])}</span>'
+        inner = f'{icons.item_icon(r["name"], 20)}<span class="fl">{esc(r["label"])}</span><span class="mn">{esc(r["name"])}</span>'
         href = item_href(r, rel, links)
         cell = f'<a href="{href}">{inner}</a>' if href else inner
         body.append(
@@ -192,8 +193,10 @@ def spark_svg(points: list[tuple[str, int]], color: str) -> str:
     y0 = ly(ys[0], ys[1] if n > 1 else ys[0])
     y1 = ly(ys[-1], ys[-2] if n > 1 else ys[-1])
     area = f"{path} L{xs[-1]:.1f},{H - B + 6:.1f} L{xs[0]:.1f},{H - B + 6:.1f} Z"
+    gid = f"s{abs(hash((points[0][0], points[-1][0], vals[0], vals[-1]))) % 10**8}"
     return (f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="가격 추이">'
-            f'<path d="{area}" fill="{color}" opacity=".1"/>'
+            f'<defs><linearGradient id="{gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{color}" stop-opacity=".3"/><stop offset="1" stop-color="{color}" stop-opacity="0"/></linearGradient></defs>'
+            f'<path d="{area}" fill="url(#{gid})"/>'
             f'<path d="{path}" fill="none" stroke="{color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>'
             f'<circle cx="{xs[0]:.1f}" cy="{ys[0]:.1f}" r="3.4" fill="#fff" stroke="{color}" stroke-width="2"/>'
             f'<circle cx="{xs[-1]:.1f}" cy="{ys[-1]:.1f}" r="4.2" fill="{color}" stroke="#fff" stroke-width="2"/>'
@@ -217,7 +220,7 @@ def trends_html(recs_by_cat: dict, history: list[dict], cfg: dict, asof: str, re
             continue
         g = GRADES[r["grade"]]
         href = item_href(r, rel, links) or "#"
-        cards.append(f'<a class="tc" href="{href}"><div class="tt">{face_svg(r["grade"], 20)}<b>{esc(r["label"])}</b>'
+        cards.append(f'<a class="tc" href="{href}"><div class="tt">{icons.item_icon(r["name"], 24)}<b>{esc(r["label"])}</b>'
                      f'<span class="tu">{esc(r["unit"])}</span><span class="tp" style="background:{g[2]};color:{g[3]}">평년 {sp(r["base"])}</span></div>'
                      f'{spark_svg(pts, g[1])}</a>')
         if len(cards) >= int(cfg.get("trend_items", 8)):

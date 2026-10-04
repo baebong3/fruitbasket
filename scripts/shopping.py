@@ -13,6 +13,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
+import icons
 from items import grade_for, line_chart
 from pricing import PriceBook, rint
 from theme import GRADES, GRADE_SHORT, ACC, GOLD, UP, DOWN, badge, chg_span, esc, face_svg, pct, sp, won, label_of
@@ -157,7 +158,7 @@ def recommend_basket(book: PriceBook, g_cfg: dict, recipes: list[dict]) -> dict:
             if c is None:
                 continue
             label = label_of(e["name"], e["kind"])
-            rows.append({"group": grp, "label": label, "qty": qty, "unit": unit, "rank": e["rank"], "price": e["today"], "price_unit": e["unit"],
+            rows.append({"group": grp, "label": label, "name": e["name"], "qty": qty, "unit": unit, "rank": e["rank"], "price": e["today"], "price_unit": e["unit"],
                          "cost": rint(c), "cost_avg": rint(ca) if ca is not None else None, "base": base, "grade": grade,
                          "key": e["key"], "uses": uses.get(label, [])[:3]})
             n += 1
@@ -195,7 +196,7 @@ def basket_html(rb: dict, rel: str, links: dict) -> str:
     rows = []
     for r in rb["rows"]:
         href = links.get(r["key"])
-        nm = f'<a href="{rel}{href}">{esc(r["label"])}</a>' if href else esc(r["label"])
+        nm = icons.item_icon(r["name"], 22) + (f'<a href="{rel}{href}">{esc(r["label"])}</a>' if href else esc(r["label"]))
         use = ("<small>" + esc(", ".join(r["uses"])) + "</small>") if r["uses"] else ""
         rows.append(f'<tr><td class="g">{esc(r["group"])}</td><td class="l">{nm}{use}</td><td>{r["qty"]:g}{esc(r["unit"])}</td>'
                     f'<td class="u">{won(r["price"])}원/{esc(r["price_unit"])}</td><td><span class="n">{won(r["cost"])}</span></td>'

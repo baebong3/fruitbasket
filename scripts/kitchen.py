@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+import icons
 from items import grade_for
 from pricing import PriceBook, load_yaml, rint
 from theme import GRADES, badge, esc, pct, sp, won, label_of
@@ -40,7 +41,7 @@ def compute_recipes(book: PriceBook, g_cfg: dict) -> list[dict]:
                 tot["y1"] += c_y1
             if ing.get("main"):
                 main_grade, main_base = grade, base
-            ings.append({"label": label_of(e["name"], e["kind"]), "qty": ing["qty"], "unit": unit, "rank": e["rank"],
+            ings.append({"label": label_of(e["name"], e["kind"]), "name": e["name"], "qty": ing["qty"], "unit": unit, "rank": e["rank"],
                          "price": e["today"], "price_unit": e["unit"], "cost": rint(c_today),
                          "cost_avg": rint(c_avg) if c_avg is not None else None, "base": base, "grade": grade,
                          "main": bool(ing.get("main")), "key": e["key"]})
@@ -78,7 +79,7 @@ def recipe_card(r: dict, rel: str, links: dict, full: bool) -> str:
     rows = []
     for i in r["ingredients"]:
         href = links.get(i["key"])
-        nm = f'<a href="{rel}{href}">{esc(i["label"])}</a>' if href else esc(i["label"])
+        nm = icons.item_icon(i["name"], 18) + (f'<a href="{rel}{href}">{esc(i["label"])}</a>' if href else esc(i["label"]))
         q = f'{i["qty"]:g}{i["unit"]}' if isinstance(i["qty"], (int, float)) else f'{i["qty"]}{i["unit"]}'
         rows.append(f'<tr><td class="l">{nm}{" <b class=main>주재료</b>" if i["main"] else ""}</td><td>{esc(q)}</td>'
                     f'<td class="u">{won(i["price"])}원/{esc(i["price_unit"])}</td><td><span class="n">{won(i["cost"])}</span></td>'
@@ -98,5 +99,7 @@ def recipe_card(r: dict, rel: str, links: dict, full: bool) -> str:
     seasoning = f'<p class="rc-season">양념: {esc(", ".join(r["seasoning"]))}</p>' if r["seasoning"] else ""
     meta = f'{r["servings"]}인분 · {esc(r["time"])} · {esc(" · ".join(r["tags"]))}'
     body = f'{table}{cost_line}<ol class="rc-steps">{steps}</ol>{seasoning}' if full else f'{table}{cost_line}'
-    return (f'<article class="rc"><div class="rc-h"><h3 class="serif">{esc(r["name"])}</h3>{chip}</div>'
+    main_name = next((i["name"] for i in r["ingredients"] if i["main"]), r["ingredients"][0]["name"])
+    dish = f'<span class="dish">{icons.use(icons.dish_icon(r["tags"]), 40)}{icons.item_icon(main_name, 34)}</span>'
+    return (f'<article class="rc"><div class="rc-h"><span class="tl">{dish}<h3 class="serif">{esc(r["name"])}</h3></span>{chip}</div>'
             f'<div class="rc-meta">{meta}</div>{body}</article>')

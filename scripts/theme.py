@@ -6,6 +6,8 @@ import re
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
+import icons
+
 WEEK = "월화수목금토일"
 
 # 가격 수준 : 이름, 주색, 연한 바탕, 진한 글자
@@ -259,6 +261,16 @@ footer a{{color:var(--acc);font-weight:700;text-decoration:none;white-space:nowr
 .rc-cost.big{{font-size:15px;margin:4px 0 12px}}.rc-cost.big b{{font-size:20px}}
 @media (max-width:760px){{.hero2{{grid-template-columns:1fr;gap:10px}}.hero2 .g{{max-width:260px;margin:0 auto}}.comp{{grid-template-columns:repeat(3,1fr);gap:8px}}.x2{{font-size:20px}}}}
 @media (max-width:640px){{.rb{{min-width:0;font-size:12.5px}}.rb td.g,.rb th:first-child,.rb td.u,.rb th.u{{display:none}}.rb th,.rb td{{padding:7px 3px}}}}
+
+/* 스케치 아이콘 */
+.ic{{vertical-align:-5px;margin-right:5px;flex:none;display:inline-block}}
+.ic.big{{vertical-align:middle;margin:0}}
+.ihead .ico{{width:84px;height:84px;flex:none;background:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center}}
+.ihead>div:first-child{{display:flex;align-items:center;gap:18px}}
+.rc-h .dish{{display:flex;align-items:center;gap:0;flex:none}}.rc-h .dish .ic{{margin:0}}.rc-h .dish .ic+.ic{{margin-left:-10px}}
+.rc-h .tl{{display:flex;align-items:center;gap:10px;min-width:0}}
+.tt .ic{{vertical-align:-4px}}
+.bl .ic{{vertical-align:-5px}}
 """
 
 
@@ -266,7 +278,7 @@ def shell(title: str, body: str, rel: str, asof: str, fetched: str, extra_meta: 
     """공통 머리글·바닥글이 붙은 전체 HTML"""
     out = f"""<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">
-<title>{esc(title)}</title>{FONTS}<style>{CSS}</style></head><body><div class="wrap">
+<title>{esc(title)}</title>{FONTS}<style>{CSS}</style></head><body>{icons.sprite()}<div class="wrap">
 <header><a class="brand" href="{rel}index.html">{LOGO}<div><b>과일바구니</b><small>과일·채소 가격 리포트</small></div></a>
 <div class="meta"><span class="src"><i>aT</i>{esc(SOURCE_SHORT[4:])}</span><br>조사일 <b>{kdate(asof)}</b> · 갱신 {esc(fetched)}{extra_meta}</div></header>
 {body}

@@ -11,6 +11,7 @@ from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 import store
+import icons
 from theme import (GRADES, GRADE_SHORT, UP, DOWN, INK, SUB, GOLD, ACC, badge, chg_span, esc, face_svg,
                    kdate, mdate, label_of, pct, shell, sp, split_name, won)
 
@@ -81,7 +82,10 @@ def line_chart(points: list[tuple[str, int]], color: str, ref: int | None, ref_n
         paths.append(pth)
         areas.append(f"{pth} L{xs[sg[-1]]:.1f},{H - B:.1f} L{xs[sg[0]]:.1f},{H - B:.1f} Z")
     path, area = " ".join(paths), " ".join(areas)
-    out = [f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="가격 추이 그래프">']
+    gid = f"g{abs(hash((points[0][0], points[-1][0], color, W))) % 10**8}"
+    out = [f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="가격 추이 그래프">'
+           f'<defs><linearGradient id="{gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{color}" stop-opacity=".28"/>'
+           f'<stop offset="1" stop-color="{color}" stop-opacity="0"/></linearGradient></defs>']
     if len(segs) > 1:
         for a, b2 in zip(segs, segs[1:]):
             xm = (xs[a[-1]] + xs[b2[0]]) / 2
@@ -89,7 +93,7 @@ def line_chart(points: list[tuple[str, int]], color: str, ref: int | None, ref_n
     # 가로 괘선 + 오른쪽 눈금
     for t in ticks:
         y = y_of(t)
-        out.append(f'<line x1="{L}" x2="{W - R + 6}" y1="{y:.1f}" y2="{y:.1f}" stroke="#E6E2DA" stroke-width="1"/>'
+        out.append(f'<line x1="{L}" x2="{W - R + 6}" y1="{y:.1f}" y2="{y:.1f}" stroke="#D8D3C9" stroke-width="1" stroke-dasharray="2 4"/>'
                    f'<text x="{W - R + 10}" y="{y + 4:.1f}" class="ax">{t:,}</text>')
     # x 눈금 : 월 경계 (짧은 기간은 주 단위)
     if span_days <= 45:
@@ -118,8 +122,8 @@ def line_chart(points: list[tuple[str, int]], color: str, ref: int | None, ref_n
     if ref is not None:
         y = y_of(ref)
         out.append(f'<line x1="{L}" x2="{W - R + 6}" y1="{y:.1f}" y2="{y:.1f}" stroke="{GOLD}" stroke-width="1.4" stroke-dasharray="5 4"/>')
-    out.append(f'<path d="{area}" fill="{color}" opacity=".08"/>')
-    out.append(f'<path d="{path}" fill="none" stroke="{color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>')
+    out.append(f'<path d="{area}" fill="url(#{gid})"/>')
+    out.append(f'<path d="{path}" fill="none" stroke="{color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>')
 
     # 라벨 : 최고, 최저, 현재, 평년 - 다른 라벨·선·축과 겹치지 않는 자리를 고름 (모두 겹치면 가장 덜 겹치는 자리)
     placed: list[tuple[float, float, float, float]] = []
@@ -172,7 +176,8 @@ def line_chart(points: list[tuple[str, int]], color: str, ref: int | None, ref_n
         out.append(f'<text x="{cx:.1f}" y="{cy:.1f}" class="{cls}" text-anchor="{anc}">{text}</text>')
 
     i_hi, i_lo, last = vals.index(max(vals)), vals.index(min(vals)), n - 1
-    out.append(f'<circle cx="{xs[last]:.1f}" cy="{ys[last]:.1f}" r="4.5" fill="{color}" stroke="#fff" stroke-width="2"/>')
+    out.append(f'<circle cx="{xs[last]:.1f}" cy="{ys[last]:.1f}" r="9" fill="{color}" opacity=".18"/>'
+               f'<circle cx="{xs[last]:.1f}" cy="{ys[last]:.1f}" r="4.5" fill="{color}" stroke="#fff" stroke-width="2"/>')
     put(xs[last], ys[last], f"현재 {vals[last]:,}", "above")
     if i_hi != last:
         out.append(f'<circle cx="{xs[i_hi]:.1f}" cy="{ys[i_hi]:.1f}" r="3.2" fill="#fff" stroke="{color}" stroke-width="2"/>')
@@ -443,7 +448,7 @@ def build_item_pages(snap: dict, cfg: dict, history: list[dict], fetched: str) -
 
         sub = " · ".join(x for x in (e["cat"], f"품종 {e['kind']}" if e["kind"] else "", f"{main_cls} {main_it['rank']} {main_it['unit']} 기준") if x)
         body = f"""<div class="crumb"><a href="../index.html">과일바구니</a> › {esc(e["cat"])} › {esc(label)}</div>
-<div class="ihead"><div><h1>{esc(label)}</h1><div class="sub">{esc(sub)}</div></div>{badge(grade, 22) if grade else ""}</div>
+<div class="ihead"><div><div class="ico">{icons.item_icon(e["name"], 64, "ic big")}</div><div><h1>{esc(label)}</h1><div class="sub">{esc(sub)}</div></div></div>{badge(grade, 22) if grade else ""}</div>
 <div class="prices">{price_card("소매", retail, True, g_cfg)}{price_card("도매", whole, False, g_cfg)}</div>
 <div class="card"><h2>가격 추이<small>{esc(main_cls)} {esc(main_it["rank"])} · {esc(main_it["unit"])} · 점선은 평년 가격</small></h2>{chart_html}{pos_html}{stat}</div>
 <div class="card"><div class="two"><div><h2>오늘의 리포트</h2><h3>{esc(kdate(asof))} 기준</h3>{verdict}<ul class="rep">{rep}</ul></div>
