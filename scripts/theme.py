@@ -244,9 +244,21 @@ footer a{{color:var(--acc);font-weight:700;text-decoration:none;white-space:nowr
 .bk-main .x{{font-size:48px;font-weight:800;letter-spacing:-.04em;line-height:1.1;margin:4px 0}}.bk-main .v{{font-size:14px;font-weight:700}}
 .bk-grid{{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}}.bk-grid>div{{border-top:1.5px solid var(--ink);padding-top:8px}}
 .bk-grid .k{{font-size:12.5px;color:var(--sub);font-weight:600}}.x2{{font-size:24px;font-weight:800;letter-spacing:-.03em}}.x2 small{{font-size:12px;color:var(--sub);font-weight:600;margin-left:2px}}
-.cmp{{max-width:640px}}.muted{{color:var(--sub);font-weight:500;font-size:12.5px}}
+.cmp{{max-width:640px}}.cmp th{{white-space:normal;line-height:1.3}}.cmp th small{{font-weight:500}}.muted{{color:var(--sub);font-weight:500;font-size:12.5px}}
 @media (max-width:900px){{.rgrid,.rgrid.full{{grid-template-columns:1fr 1fr}}}}
 @media (max-width:640px){{.rgrid,.rgrid.full{{grid-template-columns:1fr}}.bk{{grid-template-columns:1fr}}.bk-main .x{{font-size:40px}}.rt td.u,.rt th.u{{display:none}}}}
+
+/* 장보기 지수 첫 화면 */
+.hero2{{display:grid;grid-template-columns:270px 1fr;gap:30px;padding:26px 0 20px;border-bottom:1px solid var(--line);align-items:center}}
+.hero2 .g{{text-align:center}}.gauge{{width:100%;height:auto;display:block}}.gv{{font-size:44px;font-weight:800;letter-spacing:-.04em}}
+.gl{{font-size:17px;font-weight:800;margin-top:-6px;letter-spacing:-.02em}}
+.hero2 h1{{font-size:27px;margin:0 0 10px}}.hsub{{font-size:15px;color:var(--sub);margin:0 0 14px;word-break:keep-all}}.hsub b{{color:var(--ink)}}
+.comp{{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:520px}}.comp>div{{border-top:1.5px solid var(--ink);padding-top:6px}}.comp .k{{font-size:12px;color:var(--sub);font-weight:600}}
+.quick{{display:flex;flex-wrap:wrap;gap:8px;padding:14px 0 4px}}.quick a{{font-size:13px;font-weight:700;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 13px;color:var(--ink)}}.quick a:hover{{border-color:var(--acc);color:var(--acc)}}
+.rb{{min-width:720px}}.rb td.g{{color:var(--sub);font-size:12.5px;white-space:nowrap}}.rb td.l small{{display:block;font-size:11.5px;color:var(--sub);font-weight:500;white-space:normal}}
+.rc-cost.big{{font-size:15px;margin:4px 0 12px}}.rc-cost.big b{{font-size:20px}}
+@media (max-width:760px){{.hero2{{grid-template-columns:1fr;gap:10px}}.hero2 .g{{max-width:260px;margin:0 auto}}.comp{{grid-template-columns:repeat(3,1fr);gap:8px}}.x2{{font-size:20px}}}}
+@media (max-width:640px){{.rb{{min-width:0;font-size:12.5px}}.rb td.g,.rb th:first-child,.rb td.u,.rb th.u{{display:none}}.rb th,.rb td{{padding:7px 3px}}}}
 """
 
 

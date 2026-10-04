@@ -22,6 +22,7 @@ import store  # noqa: E402
 import items as itemmod  # noqa: E402
 import kitchen  # noqa: E402
 import basket as basketmod  # noqa: E402
+import shopping  # noqa: E402
 from pricing import PriceBook  # noqa: E402
 from theme import (GRADES, UP, DOWN, ACC, badge, chg_span, esc, face_svg, kdate, mdate, label_of,  # noqa: E402
                    pct, shell, sp, split_name, won, no_dash)
@@ -227,7 +228,7 @@ def trends_html(recs_by_cat: dict, history: list[dict], cfg: dict, asof: str, re
 
 
 def page_html(snap: dict, recs_by_cls: dict, s: dict, history: list[dict], cfg: dict,
-              archive: list[str], rel: str, links: dict, used: dict, recipes: list[dict], bk: dict) -> str:
+              archive: list[str], rel: str, links: dict, used: dict, recipes: list[dict], bk: dict, sh: dict, rb: dict) -> str:
     asof = snap["date"]
     g = cfg["grade"]
     rng = {"GREEN": f'{g["green_max"]:+.0f}% 이하', "YELLOW": f'{g["green_max"]:+.0f}~{g["yellow_max"]:+.0f}%',
@@ -258,19 +259,18 @@ def page_html(snap: dict, recs_by_cls: dict, s: dict, history: list[dict], cfg: 
                     for r in s["cheap"])
     chips_html = f'<div class="chips">지금 사기 좋은 과일 {chips}</div>' if chips else ""
     arch = "".join(f'<li><a href="{rel}reports/{d}.html">{kdate(d)}</a></li>' for d in archive[:60])
-    body = f"""<section class="hero"><div><div class="eyebrow">Today's Market</div>
-<h1>{esc(s['headline'])}</h1>{chips_html}</div>
-<div class="kpis">
-<div class="kpi"><div class="k">조사 품목({esc(s['cls_name'])})</div><div class="x">{s['n_items']:,}<small>개</small></div></div>
-<div class="kpi"><div class="k">어제보다 오름 / 내림</div><div class="x"><span style="color:{UP}">{s['up']:,}</span><small>/</small><span style="color:{DOWN}">{s['down']:,}</span></div></div>
-<div class="kpi"><div class="k">평년보다 비싼 과일</div><div class="x">{s['pricey']:,}<small>/ {s['n_fruit']:,}개</small></div></div>
-<div class="kpi"><div class="k">가장 비싸진 품목</div><div class="x" style="font-size:19px;white-space:normal;word-break:keep-all">{top_txt}</div></div>
-</div></section>
+    quick = (f'<div class="quick"><a href="#todaybasket">오늘 장바구니 {won(rb["total"])}원</a><a href="#kitchen">알뜰 요리 {sum(1 for r in recipes if r["pick"]):,}가지</a>'
+             f'<a href="#basket">장바구니 지수 {bk["idx_avg_all"]}</a><a href="#prices">품목별 가격 {s["n_items"]:,}개</a>'
+             f'<a href="#basket">CPI 비교</a></div>')
+    n_pick = sum(1 for r in recipes if r["pick"])
+    kitchen_html = (f'<div class="card" id="kitchen"><h2>오늘의 알뜰 요리<small>평년보다 싼 재료로 · <a href="{rel}recipes.html">레시피 {len(recipes):,}개 모두 보기 ›</a></small></h2>'
+                    f'<p class="lead">주재료가 평년보다 싼 요리 {n_pick:,}가지 중 재료비 절약률이 큰 순. 비용은 KAMIS 소매 가격으로 계산한 농산물 재료비이고, 계란·두부 등은 참고가</p>'
+                    f'<div class="rgrid">{"".join(kitchen.recipe_card(r, rel, links, False) for r in recipes[:3])}</div></div>')
+    body = shopping.hero_html(sh, bk, s, rel) + quick + f"""
+{shopping.basket_html(rb, rel, links)}
+{kitchen_html}
 {basketmod.section_html(bk, rel, links, False)}
-<div class="card" id="kitchen"><h2>오늘의 알뜰 요리<small>평년보다 싼 재료로 · <a href="{rel}recipes.html">레시피 {len(recipes):,}개 모두 보기 ›</a></small></h2>
-<p class="lead">주재료가 평년보다 싼 요리 {sum(1 for r in recipes if r["pick"]):,}가지 중 재료비 절약률이 큰 순. 비용은 KAMIS 소매 가격으로 계산한 농산물 재료비이고, 계란·두부 등은 참고가</p>
-<div class="rgrid">{"".join(kitchen.recipe_card(r, rel, links, False) for r in recipes[:3])}</div></div>
-<div class="tabs">{''.join(inputs)}<div class="seg">{''.join(labels)}</div>{''.join(panels)}</div>
+<div class="tabs" id="prices">{''.join(inputs)}<div class="seg">{''.join(labels)}</div>{''.join(panels)}</div>
 <div class="card"><h2>지난 리포트<small>날짜를 누르면 그날 리포트</small></h2><ul class="arch">{arch}</ul></div>"""
     fetched = snap.get("fetched_at", "")[:16].replace("T", " ")
     return shell(f"과일바구니 가격 리포트 {asof}", body, rel, asof, fetched)
@@ -394,8 +394,11 @@ def main() -> int:
     book = PriceBook(snap, cfg, itemmod.series_index(history))
     recipes = kitchen.compute_recipes(book, cfg["grade"])
     bk = basketmod.build(book, history, asof)
-    idx = page_html(snap, recs, s, history, cfg, archive, "", links, used, recipes, bk)
-    arc = page_html(snap, recs, s, history, cfg, archive, "../", links, used, recipes, bk)
+    sh = shopping.compute_index(bk)
+    rb = shopping.recommend_basket(book, cfg["grade"], recipes)
+    bk["index_history_html"] = shopping.index_history_html(sh)
+    idx = page_html(snap, recs, s, history, cfg, archive, "", links, used, recipes, bk, sh, rb)
+    arc = page_html(snap, recs, s, history, cfg, archive, "../", links, used, recipes, bk, sh, rb)
     picks = [r for r in recipes if r["pick"]]
     others = [r for r in recipes if not r["pick"]]
     rec_body = (f'<div class="card"><h2>오늘의 알뜰 요리<small>{esc(kdate(asof))} KAMIS 소매 가격 기준</small></h2>'
@@ -423,7 +426,7 @@ def main() -> int:
     (REPORTS / f"{asof}.md").write_text(md, encoding="utf-8")
     (REPORTS / "LATEST.md").write_text(md, encoding="utf-8")
     excel(DOCS / "fruitbasket_prices.xlsx", recs, history, asof, cfg)
-    print(f"리포트 생성 {asof}: {s['headline']} (품목 페이지 {n_items:,}개, 알뜰 요리 {len(picks):,}개, 장바구니 지수 {bk['idx_avg_all']})")
+    print(f"리포트 생성 {asof}: {s['headline']} (품목 페이지 {n_items:,}개, 알뜰 요리 {len(picks):,}개, 장바구니 지수 {bk['idx_avg_all']}, 장보기 지수 {sh['score']})")
     return 0
 
 
