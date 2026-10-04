@@ -30,14 +30,21 @@ def main() -> int:
     end = date.fromisoformat(args.end) if args.end else datetime.now(KST).date() - timedelta(days=1)
     start = date.fromisoformat(args.start) if args.start else end - timedelta(days=args.days - 1)
 
-    buf, filled, d = [], 0, start
+    buf, filled, fails, d = [], 0, 0, start
     while d <= end:
         if d.weekday() < 6:  # 일요일은 조사 없음
             try:
                 rows = store.rows_from_groups(d.isoformat(), fetch_all(d.isoformat(), cfg, None))
+                fails = 0
             except Exception as e:
                 print(f"{d} 실패: {e}")
                 rows = []
+                fails += 1
+                if fails >= 5:
+                    store.upsert_history(buf)
+                    print("::error::KAMIS 요청이 5일 연속 실패해 중단함. 인증키·ID 또는 해외 IP 차단 여부 확인 "
+                          "(차단이면 KAMIS_PROXY_URL 시크릿에 서울 리전 중계 주소 등록)")
+                    return 1
             if rows:
                 buf.extend(rows)
                 filled += 1

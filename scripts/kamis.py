@@ -93,7 +93,7 @@ def fetch_category(
     category_code: str,
     product_cls_code: str,
     country_code: str = "",
-    retries: int = 3,
+    retries: int = 2,
 ) -> tuple[str, list[dict]]:
     key = os.environ.get("KAMIS_CERT_KEY")
     cid = os.environ.get("KAMIS_CERT_ID")
@@ -114,10 +114,14 @@ def fetch_category(
     last: Exception | None = None
     for attempt in range(retries):
         try:
-            r = requests.get(url, params=params, timeout=30)
+            r = requests.get(url, params=params, timeout=20)
             r.raise_for_status()
-            return parse_items(r.json())
+            try:
+                payload = r.json()
+            except ValueError:
+                raise KamisError(f"JSON 아님 (HTTP {r.status_code}): {r.text[:200]!r}")
+            return parse_items(payload)
         except Exception as e:  # 네트워크·JSON 오류 재시도
             last = e
-            time.sleep(3 * (attempt + 1))
+            time.sleep(2)
     raise KamisError(f"KAMIS 요청 실패 ({category_code}/{product_cls_code}/{regday}): {last}")
