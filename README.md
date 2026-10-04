@@ -20,6 +20,7 @@ KAMIS Open API(부류별 일별 가격)로 과일·채소 소매·도매 가격�
 | `data/snapshots/YYYY-MM-DD.json` | 조사일별 원자료 (전일·1주·1개월·1년 전·평년 가격 포함) |
 | `docs/index.html` | 최신 대시보드 (GitHub Pages 첫 화면, JS 없이도 표시) |
 | `docs/reports/YYYY-MM-DD.html` | 날짜별 보관본 |
+| `docs/items/<품목>-<품종>.html` | 품목별 상세 페이지 - 소매·도매 오늘 가격, 1개월~1년 추이 그래프, 월별 가격, 1년 범위 안의 현재 위치, 개조식 리포트 |
 | `docs/fruitbasket_prices.xlsx` | 최신 소매·도매 표 + 최근 90일 이력 |
 | `reports/LATEST.md`, `reports/YYYY-MM-DD.md` | GitHub에서 바로 읽는 요약 |
 
@@ -41,7 +42,7 @@ KAMIS Open API(부류별 일별 가격)로 과일·채소 소매·도매 가격�
 - `categories` : 수집 부류 (기본 과일류 400, 채소류 200)
 - `product_classes` : 소매 01 / 도매 02
 - `grade` : 가격 수준 기준 (평년 대비 %) - 앱의 GREEN/YELLOW/ORANGE/RED 기준과 맞춰 조정
-- `rank_filter` : 리포트에 보일 등급 (기본 상품)
+- `rank_priority` : 품목·품종별 대표 등급 우선순위 (상품 → L과 → 특 → 중품 …; 포도처럼 상품 등급이 없는 품목도 빠지지 않음)
 - `trend_days`, `trend_items` : 추이 그래프 기간·품목 수
 
 ## 로컬 실행
@@ -65,4 +66,4 @@ python scripts/collect.py --date 2026-10-02 --fixture /tmp/fx
 `https://<사용자>.github.io/fruitbasket/` 의 `reports/LATEST.md`나 `data/snapshots/` JSON을
 Supabase에 적재하거나, Actions 마지막 단계에 Supabase upsert를 추가하는 방식으로 확장 가능
 
-자료: KAMIS 농산물유통정보 (한국농수산식품유통공사)
+자료 출처: 한국농수산식품유통공사(aT) KAMIS 농산물유통정보

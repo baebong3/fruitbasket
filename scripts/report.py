@@ -1,116 +1,40 @@
-"""리포트 생성 : 최신 스냅샷 + 누적 이력 -> HTML 대시보드, 마크다운, 엑셀
+"""리포트 생성 : 최신 스냅샷 + 누적 이력 -> HTML 대시보드, 품목 페이지, 마크다운, 엑셀
 
 산출물
   docs/index.html                 최신 리포트 (GitHub Pages 첫 화면)
   docs/reports/YYYY-MM-DD.html    날짜별 보관본
+  docs/items/<품목>-<품종>.html    품목별 상세 페이지
   docs/fruitbasket_prices.xlsx    엑셀 (최신 소매·도매, 최근 이력)
   reports/YYYY-MM-DD.md           GitHub에서 바로 읽는 요약
   reports/LATEST.md               최신 요약 사본
 """
 from __future__ import annotations
 
-import html
 import re
 import sys
 from collections import defaultdict
-from datetime import date, datetime, timedelta, timezone
-from decimal import ROUND_HALF_UP, Decimal
+from datetime import date, timedelta, timezone
+from decimal import Decimal
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import store  # noqa: E402
+import items as itemmod  # noqa: E402
+from theme import (GRADES, UP, DOWN, ACC, badge, chg_span, esc, face_svg, kdate, mdate, label_of,  # noqa: E402
+                   pct, shell, sp, split_name, won, no_dash)
 
 KST = timezone(timedelta(hours=9))
 DOCS = store.ROOT / "docs"
 REPORTS = store.ROOT / "reports"
-WEEK = "월화수목금토일"
-
-GRADES = {
-    # 이름, 막대색, 연한 바탕, 진한 글자
-    "GREEN": ("쌈", "#3DBE7A", "#E6F7EE", "#1F7A4B"),
-    "YELLOW": ("보통", "#F4BE2C", "#FFF6DA", "#8A6400"),
-    "ORANGE": ("비쌈", "#FF8A3D", "#FFEEE2", "#B4501A"),
-    "RED": ("매우 비쌈", "#FF5C6C", "#FFE8EA", "#B42536"),
-}
-UP, DOWN = "#F0475A", "#3D7BF2"  # 상승 빨강, 하락 파랑
-
-
-def face_svg(grade: str, size: int = 18) -> str:
-    """가격 수준 표정 아이콘 (쌈 = 활짝, 보통 = 무표정, 비쌈 = 시무룩, 매우 비쌈 = 울상+땀)"""
-    c = GRADES[grade][1]
-    mouth = {
-        "GREEN": "M7 13.2q5 4.6 10 0",
-        "YELLOW": "M8 14.6h8",
-        "ORANGE": "M8 15.6q4-2.6 8 0",
-        "RED": "M7.6 16.4q4.4-4 8.8 0",
-    }[grade]
-    sweat = ('<path d="M19.2 4.2q1.8 2.6 0 3.6q-1.8-1 0-3.6z" fill="#7CC4FF"/>' if grade == "RED" else "")
-    cheeks = ('<circle cx="6" cy="12.6" r="1.4" fill="#fff" opacity=".45"/>'
-              '<circle cx="18" cy="12.6" r="1.4" fill="#fff" opacity=".45"/>' if grade == "GREEN" else "")
-    return (f'<svg class="face" width="{size}" height="{size}" viewBox="0 0 24 24" aria-hidden="true">'
-            f'<circle cx="12" cy="12" r="11" fill="{c}"/>{cheeks}'
-            '<circle cx="8.6" cy="9.6" r="1.35" fill="#2b2b2b"/><circle cx="15.4" cy="9.6" r="1.35" fill="#2b2b2b"/>'
-            f'<path d="{mouth}" fill="none" stroke="#2b2b2b" stroke-width="1.6" stroke-linecap="round"/>{sweat}</svg>')
-
-
-LOGO = (
-    '<svg width="40" height="40" viewBox="0 0 48 48" aria-hidden="true">'
-    '<path d="M12 22q12-18 24 0" fill="none" stroke="#C98B4E" stroke-width="3" stroke-linecap="round"/>'
-    '<circle cx="18" cy="19" r="7" fill="#FF6B6B"/><path d="M18 12q2-4 5-4" stroke="#6B4A2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
-    '<circle cx="29" cy="18.5" r="6.5" fill="#FFB238"/><path d="M29 12q3-3 6-1.5q-2.5 3-6 1.5z" fill="#4CC38A"/>'
-    '<path d="M7 22h34l-3.5 17a3 3 0 0 1-3 2.4h-21a3 3 0 0 1-3-2.4z" fill="#E9A866"/>'
-    '<path d="M9.5 28.5h29M11 34.5h26" stroke="#C98B4E" stroke-width="1.8" stroke-linecap="round"/>'
-    '<circle cx="18" cy="20" r="1.2" fill="#fff" opacity=".7"/></svg>'
-)
 
 
 # ---------- 계산 ----------
 
-def pct(cur: int | None, base: int | None) -> Decimal | None:
-    """정수 가격에서 사사오입 소수 1자리 등락률 (부동소수점 반올림 사용 안 함)"""
-    if cur is None or not base:
-        return None
-    return ((Decimal(cur) - Decimal(base)) * 100 / Decimal(base)).quantize(Decimal("0.1"), ROUND_HALF_UP)
-
-
 def grade_of(p: Decimal | None, g: dict) -> str | None:
-    if p is None:
-        return None
-    if p <= Decimal(str(g["green_max"])):
-        return "GREEN"
-    if p <= Decimal(str(g["yellow_max"])):
-        return "YELLOW"
-    if p <= Decimal(str(g["orange_max"])):
-        return "ORANGE"
-    return "RED"
+    return itemmod.grade_for(p, g)
 
 
-def strip_unit(kind: str) -> str:
-    """끝에 붙은 단위 괄호를 중첩까지 제거: '여름(고랭지)(10kg(그물망 3포기))' -> '여름(고랭지)'"""
-    k = kind.strip()
-    if not k.endswith(")"):
-        return k
-    depth = 0
-    for i in range(len(k) - 1, -1, -1):
-        depth += {")": 1, "(": -1}.get(k[i], 0)
-        if depth == 0:
-            inner = k[i + 1:-1]
-            if re.search(r"\d", inner) and re.search(r"(kg|g|개|포기|마리|속|단|봉|통|L|ml|송이|입|묶음|접)", inner):
-                return k[:i].strip()
-            return k
-    return k
-
-
-def label_of(it: dict) -> str:
-    """사과 + 홍로(10개) -> 사과(홍로), 붉은고추 + 붉은고추(100g) -> 붉은고추 (단위는 단위 열에 따로 표시)"""
-    name = it["item_name"].strip()
-    kind = strip_unit(it.get("kind_name", ""))
-    if not kind or kind == name or kind in name:
-        return name
-    return f"{name}({kind})"
-
-
-def fill_from_history(p: dict, sid: str, asof: str, hist_idx: dict) -> dict:
+def fill_from_history(p: dict, sid: str, asof: str, hist_idx: dict, used: dict) -> dict:
     """KAMIS가 비워 둔 1주·1개월 전 가격(명절 휴장 등)을 저장된 이력의 가장 가까운 이전 조사일 값으로 채움"""
     series = hist_idx.get(sid)
     if not series:
@@ -120,88 +44,55 @@ def fill_from_history(p: dict, sid: str, asof: str, hist_idx: dict) -> dict:
     for key, days in (("w1", 7), ("m1", 30)):
         if p.get(key) is not None:
             continue
-        for back in range(0, 5):  # 목표일부터 최대 4일 이전까지
+        for back in range(0, 7):  # 목표일부터 최대 6일 이전까지
             d = (base - timedelta(days=days + back)).isoformat()
             if d in series:
                 p[key] = series[d]
+                used[key].add(d)
                 break
     return p
 
 
-def build_records(snap: dict, cfg: dict, history: list[dict] | None = None) -> dict:
-    """{cls_name: {cat_name: [record,...]}}"""
-    ranks = set(cfg.get("rank_filter") or [])
+def build_records(snap: dict, cfg: dict, history: list[dict] | None = None) -> tuple[dict, dict]:
+    """({cls_name: {cat_name: [record,...]}}, 대체 비교일 {w1: set, m1: set})"""
+    prio = cfg.get("rank_priority") or ["상품"]
     hist_idx: dict = defaultdict(dict)
     for h in history or []:
         hist_idx[store.series_id(h)][h["date"]] = h["price"]
+    used: dict = {"w1": set(), "m1": set()}
     out: dict = defaultdict(dict)
     for g in snap["groups"]:
-        recs = []
+        # 품목·품종별 대표 등급 하나만
+        groups: dict = defaultdict(list)
         for it in g["items"]:
-            sid0 = "|".join([g["cls_code"], it["item_code"], it["kind_code"], it["rank_code"]])
-            p = fill_from_history(it["prices"], sid0, snap["date"], hist_idx)
-            if p.get("today") is None:
-                continue
-            if ranks and it.get("rank") and it["rank"] not in ranks:
-                continue
+            if it["prices"].get("today") is not None:
+                groups[(it["item_code"], it["kind_code"])].append(it)
+        recs = []
+        for (ic, kc), cands in groups.items():
+            it = itemmod.pick_rank(cands, prio)
+            sid = "|".join([g["cls_code"], ic, kc, it["rank_code"]])
+            p = fill_from_history(it["prices"], sid, snap["date"], hist_idx, used)
+            name, kind = split_name(it["item_name"], it["kind_name"])
             base_key = "avg" if p.get("avg") else "y1"
             r = {
-                "label": label_of(it), "rank": it.get("rank", ""), "unit": it["unit"],
-                "name": it["item_name"].strip(),
-                "kind": (label_of(it)[len(it["item_name"].strip()) + 1:-1] if label_of(it) != it["item_name"].strip() else ""),
-                "cat": g["cat_name"], "cls": g["cls_name"],
-                "sid": "|".join([g["cls_code"], it["item_code"], it["kind_code"], it["rank_code"]]),
+                "label": label_of(name, kind), "name": name, "kind": kind,
+                "rank": it.get("rank", ""), "unit": it["unit"],
+                "cat": g["cat_name"], "cls": g["cls_name"], "sid": sid,
+                "item_code": ic, "kind_code": kc,
                 "today": p.get("today"),
-                "d1": pct(p.get("today"), p.get("d1")),
-                "w1": pct(p.get("today"), p.get("w1")),
-                "m1": pct(p.get("today"), p.get("m1")),
-                "y1": pct(p.get("today"), p.get("y1")),
-                "avg": pct(p.get("today"), p.get("avg")),
-                "base_key": base_key,
+                "d1": pct(p.get("today"), p.get("d1")), "w1": pct(p.get("today"), p.get("w1")),
+                "m1": pct(p.get("today"), p.get("m1")), "y1": pct(p.get("today"), p.get("y1")),
+                "avg": pct(p.get("today"), p.get("avg")), "base_key": base_key,
             }
             r["base"] = r[base_key]
             r["grade"] = grade_of(r["base"], cfg["grade"])
             recs.append(r)
-        # 같은 이름(품종)이 여러 등급이면 등급을 라벨에 붙임
-        counts = defaultdict(int)
-        for r in recs:
-            counts[r["label"]] += 1
-        for r in recs:
-            if counts[r["label"]] > 1 and r["rank"]:
-                r["label"] = f"{r['label']} {r['rank']}"
         if recs:
             out[g["cls_name"]][g["cat_name"]] = recs
-    return out
+    return out, used
 
 
-# ---------- 표기 ----------
-
-def won(v: int | None) -> str:
-    return "-" if v is None else f"{v:,}"
-
-
-def sp(p: Decimal | None) -> str:
-    if p is None:
-        return "-"
-    if p == 0:
-        return "0.0%"  # -0.0% 방지
-    return f"+{p:,.1f}%" if p > 0 else f"{p:,.1f}%"
-
-
-def esc(s: str) -> str:
-    return html.escape(str(s), quote=True)
-
-
-def kdate(d: str) -> str:
-    dt = date.fromisoformat(d)
-    return f"{dt.year}년 {dt.month}월 {dt.day}일({WEEK[dt.weekday()]})"
-
-
-def no_dash(s: str) -> str:
-    return s.replace("—", "-").replace("–", "-")
-
-
-# ---------- 요약 문장 ----------
+# ---------- 요약 ----------
 
 def summarize(recs_by_cls: dict) -> dict:
     retail = recs_by_cls.get("소매") or next(iter(recs_by_cls.values()), {})
@@ -214,29 +105,28 @@ def summarize(recs_by_cls: dict) -> dict:
     low = min(with_base, key=lambda r: r["base"], default=None)
     cls_name = "소매" if "소매" in recs_by_cls else next(iter(recs_by_cls), "")
     cat_name = "과일" if "과일류" in retail else "품목"
-
     if top and top["base"] > 0:
         ref = "평년" if top["base_key"] == "avg" else "1년 전"
         head = (f"{top['label']} {ref}보다 {top['base']:,.1f}% 비싸, "
                 f"{cls_name} {cat_name} {len(with_base):,}개 중 {len(pricey):,}개가 평년보다 비쌈")
     elif low:
-        head = (f"{cls_name} {cat_name} 가격 대체로 평년 이하, "
-                f"{low['label']} 평년보다 {abs(low['base']):,.1f}% 쌈")
+        head = f"{cls_name} {cat_name} 가격 대체로 평년 이하, {low['label']} 평년보다 {abs(low['base']):,.1f}% 쌈"
     else:
         head = "가격 비교 기준(평년·1년 전) 자료 없음"
-
     up = sum(1 for r in allr if r["d1"] is not None and r["d1"] > 0)
     down = sum(1 for r in allr if r["d1"] is not None and r["d1"] < 0)
-    return {
-        "headline": head, "n_items": len(allr), "up": up, "down": down,
-        "pricey": len(pricey), "n_fruit": len(with_base),
-        "top": top, "low": low, "cheap": cheap[:6], "cls_name": cls_name,
-    }
+    return {"headline": head, "n_items": len(allr), "up": up, "down": down, "pricey": len(pricey),
+            "n_fruit": len(with_base), "top": top, "low": low, "cheap": cheap[:6], "cls_name": cls_name}
 
 
 # ---------- HTML 조각 ----------
 
-def bars_html(recs: list[dict]) -> str:
+def item_href(r: dict, rel: str, links: dict) -> str | None:
+    p = links.get((r["item_code"], r["kind_code"]))
+    return f"{rel}{p}" if p else None
+
+
+def bars_html(recs: list[dict], rel: str, links: dict) -> str:
     rs = sorted([r for r in recs if r["base"] is not None], key=lambda r: r["base"], reverse=True)
     if not rs:
         return '<p class="empty">비교 기준 가격이 없는 품목만 있음</p>'
@@ -246,45 +136,33 @@ def bars_html(recs: list[dict]) -> str:
         ratio = float(abs(r["base"]) / mx)
         color = GRADES[r["grade"]][1]
         val = f'<span class="v">{sp(r["base"])}</span>'
-        # 막대는 수치 라벨 자리(4.6em)를 뺀 폭 안에서만 늘어남 -> 모바일에서도 수치가 잘리지 않음
         bar = f'<i style="width:calc((100% - 4.6em) * {ratio:.4f});background:{color}"></i>'
         neg = f"{val}{bar}" if r["base"] < 0 else ""
         pos = f"{bar}{val}" if r["base"] >= 0 else ""
         mark = "" if r["base_key"] == "avg" else '<sup title="평년가 없음, 1년 전 대비">*</sup>'
         sub = f'<small>{esc(r["kind"])}</small>' if r["kind"] else ""
-        rows.append(f'<div class="bl"><span class="fl">{esc(r["label"])}{mark}</span>'
-                    f'<span class="mn">{esc(r["name"])}{mark}{sub}</span></div>'
-                    f'<div class="bt"><div class="neg">{neg}</div><div class="pos">{pos}</div></div>')
-    note = ""
-    if any(r["base_key"] != "avg" for r in rs):
-        note = '<p class="note">* 평년가가 없어 1년 전 가격과 비교</p>'
+        href = item_href(r, rel, links)
+        full = f'<span class="fl">{esc(r["label"])}{mark}</span><span class="mn">{esc(r["name"])}{mark}{sub}</span>'
+        lab = f'<a href="{href}">{full}</a>' if href else full
+        rows.append(f'<div class="bl">{lab}</div><div class="bt"><div class="neg">{neg}</div><div class="pos">{pos}</div></div>')
+    note = '<p class="note">* 평년가가 없어 1년 전 가격과 비교</p>' if any(r["base_key"] != "avg" for r in rs) else ""
     return f'<div class="bars">{"".join(rows)}</div>{note}'
 
 
-def chg_cell(p: Decimal | None) -> str:
-    if p is None:
-        return '<td><span class="n">-</span></td>'
-    c = UP if p > 0 else DOWN if p < 0 else "inherit"
-    return f'<td><span class="n" style="color:{c}">{sp(p)}</span></td>'
-
-
-def table_html(recs: list[dict]) -> str:
+def table_html(recs: list[dict], rel: str, links: dict) -> str:
     rs = sorted(recs, key=lambda r: (r["base"] is None, -(r["base"] or 0)))
     head = ("<tr><th class='l'>품목</th><th class='u'>단위</th><th>오늘 가격(원)</th><th>평년 대비</th><th>가격 수준</th>"
             "<th>전일 대비</th><th>1주 전 대비</th><th>1개월 전 대비</th><th>1년 전 대비</th></tr>")
     body = []
     for r in rs:
-        g = GRADES.get(r["grade"])
-        badge = (f'<span class="badge" style="background:{g[2]};color:{g[3]}">{face_svg(r["grade"], 16)}<em>{g[0]}</em></span>'
-                 if g else "-")
+        sub = " · ".join(x for x in (r["kind"], r["unit"]) if x)
+        inner = f'<span class="fl">{esc(r["label"])}</span><span class="mn">{esc(r["name"])}</span>'
+        href = item_href(r, rel, links)
+        cell = f'<a href="{href}">{inner}</a>' if href else inner
         body.append(
-            f'<tr><td class="l"><span class="fl">{esc(r["label"])}</span><span class="mn">{esc(r["name"])}</span>'
-            f'<small class="lu">{esc(" · ".join(x for x in (r["kind"], r["rank"] if r["label"].endswith(r["rank"]) and r["rank"] else "", r["unit"]) if x))}</small></td>'
-            f'<td class="u">{esc(r["unit"])}</td>'
-            f'<td><span class="n"><b>{won(r["today"])}</b></span></td>'
-            + chg_cell(r["avg"]) + f"<td>{badge}</td>"
-            + chg_cell(r["d1"]) + chg_cell(r["w1"]) + chg_cell(r["m1"]) + chg_cell(r["y1"]) + "</tr>"
-        )
+            f'<tr><td class="l">{cell}<small class="lu">{esc(sub)}</small></td><td class="u">{esc(r["unit"])}</td>'
+            f'<td><span class="n"><b>{won(r["today"])}</b></span></td><td>{chg_span(r["avg"])}</td><td>{badge(r["grade"], 16)}</td>'
+            f'<td>{chg_span(r["d1"])}</td><td>{chg_span(r["w1"])}</td><td>{chg_span(r["m1"])}</td><td>{chg_span(r["y1"])}</td></tr>')
     return f'<div class="tw"><table><thead>{head}</thead><tbody>{"".join(body)}</tbody></table></div>'
 
 
@@ -299,9 +177,9 @@ def spark_svg(points: list[tuple[str, int]], color: str) -> str:
     ys = [T + (H - T - B) * (1 - (v - lo) / (hi - lo)) for v in vals]
     path = " ".join(f"{'M' if i == 0 else 'L'}{x:.1f},{y:.1f}" for i, (x, y) in enumerate(zip(xs, ys)))
     d0, d1 = points[0][0][5:].replace("-", "."), points[-1][0][5:].replace("-", ".")
-    # 수치 라벨은 선이 이어지는 반대쪽(위/아래)에 둬서 선·점과 겹치지 않게
+
     def ly(y: float, neighbor: float) -> float:
-        below = neighbor < y  # 이웃 점이 더 위에 있으면 라벨은 아래로
+        below = neighbor < y
         if below and y + 18 > H - B + 8:
             below = False
         if not below and y - 10 < 12:
@@ -310,21 +188,17 @@ def spark_svg(points: list[tuple[str, int]], color: str) -> str:
     y0 = ly(ys[0], ys[1] if n > 1 else ys[0])
     y1 = ly(ys[-1], ys[-2] if n > 1 else ys[-1])
     area = f"{path} L{xs[-1]:.1f},{H - B + 6:.1f} L{xs[0]:.1f},{H - B + 6:.1f} Z"
-    return (
-        f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="가격 추이">'
-        f'<path d="{area}" fill="{color}" opacity=".12"/>'
-        f'<path d="{path}" fill="none" stroke="{color}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>'
-        f'<circle cx="{xs[0]:.1f}" cy="{ys[0]:.1f}" r="3.6" fill="#fff" stroke="{color}" stroke-width="2"/>'
-        f'<circle cx="{xs[-1]:.1f}" cy="{ys[-1]:.1f}" r="4.4" fill="{color}" stroke="#fff" stroke-width="2"/>'
-        f'<text x="{L}" y="{y0:.1f}" class="sv">{vals[0]:,}</text>'
-        f'<text x="{W - R}" y="{y1:.1f}" class="sv" text-anchor="end">{vals[-1]:,}</text>'
-        f'<text x="{L}" y="{H - 4}" class="sd">{d0}</text>'
-        f'<text x="{W - R}" y="{H - 4}" class="sd" text-anchor="end">{d1}</text>'
-        "</svg>"
-    )
+    return (f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="가격 추이">'
+            f'<path d="{area}" fill="{color}" opacity=".1"/>'
+            f'<path d="{path}" fill="none" stroke="{color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>'
+            f'<circle cx="{xs[0]:.1f}" cy="{ys[0]:.1f}" r="3.4" fill="#fff" stroke="{color}" stroke-width="2"/>'
+            f'<circle cx="{xs[-1]:.1f}" cy="{ys[-1]:.1f}" r="4.2" fill="{color}" stroke="#fff" stroke-width="2"/>'
+            f'<text x="{L}" y="{y0:.1f}" class="sv">{vals[0]:,}</text>'
+            f'<text x="{W - R}" y="{y1:.1f}" class="sv" text-anchor="end">{vals[-1]:,}</text>'
+            f'<text x="{L}" y="{H - 4}" class="sd">{d0}</text><text x="{W - R}" y="{H - 4}" class="sd" text-anchor="end">{d1}</text></svg>')
 
 
-def trends_html(recs_by_cat: dict, history: list[dict], cfg: dict, asof: str) -> str:
+def trends_html(recs_by_cat: dict, history: list[dict], cfg: dict, asof: str, rel: str, links: dict) -> str:
     start = (date.fromisoformat(asof) - timedelta(days=int(cfg.get("trend_days", 90)))).isoformat()
     series = defaultdict(list)
     for h in history:
@@ -337,139 +211,62 @@ def trends_html(recs_by_cat: dict, history: list[dict], cfg: dict, asof: str) ->
         pts = sorted(series.get(r["sid"], []))
         if len(pts) < 2:
             continue
-        color = GRADES[r["grade"]][1]
         g = GRADES[r["grade"]]
-        cards.append(
-            f'<div class="tc"><div class="tt">{face_svg(r["grade"], 20)}<b>{esc(r["label"])}</b>'
-            f'<span class="tu">{esc(r["unit"])}</span>'
-            f'<span class="tp" style="background:{g[2]};color:{g[3]}">평년 {sp(r["base"])}</span></div>'
-            f'{spark_svg(pts, color)}</div>'
-        )
+        href = item_href(r, rel, links) or "#"
+        cards.append(f'<a class="tc" href="{href}"><div class="tt">{face_svg(r["grade"], 20)}<b>{esc(r["label"])}</b>'
+                     f'<span class="tu">{esc(r["unit"])}</span><span class="tp" style="background:{g[2]};color:{g[3]}">평년 {sp(r["base"])}</span></div>'
+                     f'{spark_svg(pts, g[1])}</a>')
         if len(cards) >= int(cfg.get("trend_items", 8)):
             break
     if not cards:
-        return ('<p class="empty">이력이 2일 이상 쌓이면 추이 그래프가 표시됨 '
-                '(Actions의 「과거 가격 백필」을 한 번 실행하면 바로 채워짐)</p>')
+        return '<p class="empty">이력이 2일 이상 쌓이면 추이 그래프가 표시됨</p>'
     return f'<div class="tg">{"".join(cards)}</div>'
 
 
-CSS = """
-:root{--ink:#2A2F3A;--sub:#7A8190;--line:#EEF0F4;--bg:#fff;--card:#FAFBFD;--peach:#FFF1E6;--acc:#FF7A45;--mint:#E8F7F0}
-*{box-sizing:border-box}html{color-scheme:light}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 Pretendard,"Pretendard Variable",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1040px;margin:0 auto;padding:0 16px 56px}
-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:22px 0 6px}
-.brand{display:flex;align-items:center;gap:10px}.brand b{font-size:21px;font-weight:800;letter-spacing:-.03em}
-.brand small{display:block;font-size:12.5px;color:var(--sub);font-weight:500;letter-spacing:0;margin-top:-2px}
-.meta{font-size:12.5px;color:var(--sub);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
-.hero{background:linear-gradient(135deg,#FFF3E9 0%,#FFF8EF 55%,#F0FAF4 100%);border-radius:24px;padding:22px 22px 18px;margin-top:14px}
-.hero .tag{display:inline-block;font-size:12.5px;font-weight:700;color:var(--acc);background:#fff;border-radius:999px;padding:3px 11px;margin-bottom:8px}
-h1{font-size:25px;line-height:1.4;letter-spacing:-.035em;margin:0 0 16px;word-break:keep-all;font-weight:800}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.kpi{background:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 1px 0 rgba(42,47,58,.04),0 6px 18px -12px rgba(42,47,58,.25)}
-.kpi .k{font-size:12.5px;color:var(--sub);font-weight:600;word-break:keep-all}.kpi .x{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.3;white-space:nowrap}
-.kpi .x small{font-size:13.5px;font-weight:600;color:var(--sub);margin-left:2px}
-.chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:14px;font-size:13px;color:var(--sub);font-weight:600}
-.chip{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;padding:3px 11px 3px 5px;border-radius:999px;background:#fff;color:#1F7A4B}
-.tabs{margin-top:26px}.tabs input{position:absolute;opacity:0}
-.seg{display:inline-flex;background:#F1F3F7;border-radius:999px;padding:4px;gap:2px}
-.seg label{padding:7px 22px;border-radius:999px;cursor:pointer;font-weight:700;color:var(--sub);font-size:14.5px}
-#t0:checked~.seg label[for=t0],#t1:checked~.seg label[for=t1],#t2:checked~.seg label[for=t2]{background:#fff;color:var(--ink);box-shadow:0 2px 8px -3px rgba(42,47,58,.3)}
-.panel{display:none}#t0:checked~#p0,#t1:checked~#p1,#t2:checked~#p2{display:block}
-.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px 18px 16px;margin-top:16px}
-h2{font-size:18.5px;margin:0 0 2px;letter-spacing:-.03em;font-weight:800;display:flex;align-items:center;gap:8px}
-h2 .dot{width:10px;height:10px;border-radius:50%;background:var(--acc)}
-h3{font-size:13.5px;margin:16px 0 8px;color:var(--sub);font-weight:700}
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--sub);margin:0 0 12px}
-.legend span{display:inline-flex;align-items:center;gap:4px}
-.bars{display:grid;grid-template-columns:max-content 1fr;column-gap:12px;row-gap:6px;align-items:center}
-.bl{font-size:14px;white-space:nowrap;text-align:right;font-weight:600}.bl sup{color:var(--sub)}
-.bt{display:grid;grid-template-columns:1fr 1fr;height:26px}
-.neg,.pos{display:flex;align-items:center;gap:6px}.neg{justify-content:flex-end;border-right:2px dotted #D5D9E0}
-.pos{padding-left:2px}.neg{padding-right:2px}
-.bt i{display:block;height:16px;border-radius:999px}.v{font-size:13.5px;font-weight:800;white-space:nowrap}
-.note,.empty{color:var(--sub);font-size:12.5px;margin:10px 0 0}
-.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px;border:1px solid var(--line)}
-table{border-collapse:collapse;width:100%;min-width:780px;font-size:14px}
-th{font-size:12.5px;color:var(--sub);font-weight:700;padding:10px 6px;background:var(--card);white-space:nowrap;text-align:center}
-td{padding:9px 6px;border-top:1px solid var(--line);text-align:center;white-space:nowrap}
-tbody tr:hover td{background:#FFFAF5}
-td.l,th.l{text-align:left;font-weight:700;padding-left:14px;position:sticky;left:0;background:#fff;z-index:1;box-shadow:1px 0 0 var(--line)}th.l{background:var(--card)}td.u{color:var(--sub);font-size:13px}
-.n{display:inline-block;min-width:5.2em;text-align:right}
-.badge em{font-style:normal}.lu,.mn{display:none}.badge{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px 2px 3px}
-.face{flex:none;display:block}
-.tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
-.tc{background:var(--card);border-radius:16px;padding:12px 14px 6px}
-.tt{display:flex;align-items:center;gap:6px;font-size:14px;flex-wrap:wrap}.tu{color:var(--sub);font-size:12px}
-.tp{margin-left:auto;font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px}
-.tc>svg{width:100%;height:auto;display:block}.sv{font-size:13px;font-weight:800;fill:var(--ink)}.sd{font-size:11.5px;fill:var(--sub)}
-.arch{display:flex;flex-wrap:wrap;gap:6px;padding:0;margin:0;list-style:none}
-.arch a{display:inline-block;font-size:13px;color:var(--ink);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
-.arch a:hover{border-color:var(--acc);color:var(--acc)}
-footer{margin-top:30px;text-align:center;color:var(--sub);font-size:12px;line-height:1.8}
-footer a{color:var(--acc);font-weight:700;text-decoration:none;white-space:nowrap}
-@media (max-width:640px){table{min-width:0;font-size:13.5px}td.u,th.u{display:none}.fl{display:none}.mn{display:inline}.lu{display:block;font-size:11.5px;color:var(--sub);font-weight:500;white-space:normal;word-break:keep-all;max-width:9.5em}td.l,th.l{padding-left:10px}.n{min-width:0}.badge{padding:2px}.badge em{display:none}th,td{padding:8px 5px}.bl{font-size:13px;line-height:1.25}.bl small{display:block;font-size:11px;color:var(--sub);font-weight:500}.bt{height:auto;min-height:26px}.v{font-size:12.5px}h1{font-size:20.5px}.hero{padding:18px 16px 14px;border-radius:20px}.kpis{grid-template-columns:repeat(2,1fr)}.kpi .x{font-size:22px}.card{padding:16px 12px 14px}.seg label{padding:7px 18px}}
-@media (max-width:420px){table{font-size:12.5px}th,td{padding:8px 3px}.tw{margin:0 -4px}}
-"""
-
-
 def page_html(snap: dict, recs_by_cls: dict, s: dict, history: list[dict], cfg: dict,
-              archive: list[str], rel: str) -> str:
+              archive: list[str], rel: str, links: dict, used: dict) -> str:
     asof = snap["date"]
     g = cfg["grade"]
-    rng = {
-        "GREEN": f'{g["green_max"]:+.0f}% 이하', "YELLOW": f'{g["green_max"]:+.0f}~{g["yellow_max"]:+.0f}%',
-        "ORANGE": f'{g["yellow_max"]:+.0f}% 초과', "RED": f'{g["orange_max"]:+.0f}% 초과',
-    }
-    legend = '<div class="legend">' + "".join(
-        f'<span>{face_svg(k, 15)}{GRADES[k][0]} ({rng[k]})</span>' for k in GRADES) + "</div>"
+    rng = {"GREEN": f'{g["green_max"]:+.0f}% 이하', "YELLOW": f'{g["green_max"]:+.0f}~{g["yellow_max"]:+.0f}%',
+           "ORANGE": f'{g["yellow_max"]:+.0f}% 초과', "RED": f'{g["orange_max"]:+.0f}% 초과'}
+    legend = '<div class="legend">' + "".join(f'<span>{face_svg(k, 15)}{GRADES[k][0]} ({rng[k]})</span>' for k in GRADES) + "</div>"
+    fb = []
+    for key, nm in (("w1", "1주 전"), ("m1", "1개월 전")):
+        if used[key]:
+            fb.append(f"{nm} 가격이 없는 품목(휴장 등)은 {', '.join(mdate(d) for d in sorted(used[key]))} 가격과 비교")
+    fb_note = f'<p class="note">{esc(" · ".join(fb))}</p>' if fb else ""
 
     inputs, labels, panels = [], [], []
     for i, (cls, cats) in enumerate(recs_by_cls.items()):
-        chk = " checked" if i == 0 else ""
-        inputs.append(f'<input type="radio" name="t" id="t{i}"{chk}>')
-        labels.append(f'<label for="t{i}">{esc(cls)}</label>')
+        inputs.append(f'<input type="radio" name="t" id="t{i}"{" checked" if i == 0 else ""}>')
+        labels.append(f'<label for="t{i}">{esc(cls)} 가격</label>')
         sec = []
         for cat, recs in cats.items():
-            sec.append(f'<div class="card"><h2><span class="dot"></span>{esc(cat)} {esc(cls)} 가격</h2>'
-                       f"<h3>평년 대비 얼마나 올랐나</h3>{legend}{bars_html(recs)}"
-                       f"<h3>품목별 가격</h3>{table_html(recs)}</div>")
-        sec.append(f'<div class="card"><h2><span class="dot" style="background:#4CC38A"></span>{esc(cls)} 가격 추이</h2>'
-                   f"<h3>최근 {int(cfg.get('trend_days', 90)):,}일, 평년 대비 변동이 큰 품목</h3>"
-                   + trends_html(cats, history, cfg, asof) + "</div>")
+            sec.append(f'<div class="card"><h2>{esc(cat)} {esc(cls)}<small>{len(recs):,}개 품목 · 품목명을 누르면 상세 페이지</small></h2>'
+                       f"<h3>평년 대비 등락률</h3>{legend}{bars_html(recs, rel, links)}"
+                       f"<h3>품목별 가격</h3>{table_html(recs, rel, links)}{fb_note}</div>")
+        sec.append(f'<div class="card"><h2>{esc(cls)} 가격 추이<small>최근 {int(cfg.get("trend_days", 90)):,}일, 평년 대비 변동이 큰 품목</small></h2>'
+                   + trends_html(cats, history, cfg, asof, rel, links) + "</div>")
         panels.append(f'<section class="panel" id="p{i}">{"".join(sec)}</section>')
 
     top = s["top"]
-    top_txt = (f'{esc(top["label"])}<small>{sp(top["base"])}</small>'
-               if top and top["base"] is not None else "-")
-    chips = "".join(f'<span class="chip">{face_svg("GREEN", 16)}{esc(r["label"])} {sp(r["base"])}</span>'
+    top_txt = f'{esc(top["label"])}<small>{sp(top["base"])}</small>' if top and top["base"] is not None else "-"
+    chips = "".join(f'<a class="chip" href="{item_href(r, rel, links) or "#"}">{face_svg("GREEN", 16)}{esc(r["label"])} {sp(r["base"])}</a>'
                     for r in s["cheap"])
     chips_html = f'<div class="chips">지금 사기 좋은 과일 {chips}</div>' if chips else ""
     arch = "".join(f'<li><a href="{rel}reports/{d}.html">{kdate(d)}</a></li>' for d in archive[:60])
-    fetched = esc(snap.get("fetched_at", "")[:16].replace("T", " "))
-
-    out = f"""<!doctype html><html lang="ko"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="light">
-<title>과일바구니 가격 리포트 {asof}</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
-<style>{CSS}</style></head><body><div class="wrap">
-<header><div class="brand">{LOGO}<div><b>과일바구니</b><small>오늘의 과일·채소 가격 리포트</small></div></div>
-<div class="meta"><span style="white-space:nowrap">조사일 {kdate(asof)}</span> · <span style="white-space:nowrap">갱신 {fetched}</span></div></header>
-<section class="hero"><span class="tag">오늘의 한 줄</span>
-<h1>{esc(s['headline'])}</h1>
+    body = f"""<section class="hero"><div><div class="eyebrow">Today's Market</div>
+<h1>{esc(s['headline'])}</h1>{chips_html}</div>
 <div class="kpis">
 <div class="kpi"><div class="k">조사 품목({esc(s['cls_name'])})</div><div class="x">{s['n_items']:,}<small>개</small></div></div>
 <div class="kpi"><div class="k">어제보다 오름 / 내림</div><div class="x"><span style="color:{UP}">{s['up']:,}</span><small>/</small><span style="color:{DOWN}">{s['down']:,}</span></div></div>
 <div class="kpi"><div class="k">평년보다 비싼 과일</div><div class="x">{s['pricey']:,}<small>/ {s['n_fruit']:,}개</small></div></div>
 <div class="kpi"><div class="k">가장 비싸진 품목</div><div class="x" style="font-size:19px;white-space:normal;word-break:keep-all">{top_txt}</div></div>
-</div>{chips_html}</section>
+</div></section>
 <div class="tabs">{''.join(inputs)}<div class="seg">{''.join(labels)}</div>{''.join(panels)}</div>
-<div class="card"><h2><span class="dot" style="background:#FFB238"></span>지난 리포트</h2><h3>날짜를 누르면 그날 리포트를 볼 수 있어요</h3><ul class="arch">{arch}</ul></div>
-<footer>자료: KAMIS 농산물유통정보(한국농수산식품유통공사) 일별 부류별 가격<br>
-가격 수준은 평년(최근 5년 중 최대·최소를 뺀 평균) 대비 등락률 기준 · 매일 자동 생성 · <a href="{rel}fruitbasket_prices.xlsx">엑셀 받기</a></footer>
-</div></body></html>"""
-    return no_dash(out)
+<div class="card"><h2>지난 리포트<small>날짜를 누르면 그날 리포트</small></h2><ul class="arch">{arch}</ul></div>"""
+    fetched = snap.get("fetched_at", "")[:16].replace("T", " ")
+    return shell(f"과일바구니 가격 리포트 {asof}", body, rel, asof, fetched)
 
 
 # ---------- 마크다운·엑셀 ----------
@@ -480,14 +277,12 @@ def markdown(snap: dict, recs_by_cls: dict, s: dict) -> str:
          f"- 평년보다 비싼 과일 {s['pricey']:,}개 / {s['n_fruit']:,}개", ""]
     for cls, cats in recs_by_cls.items():
         for cat, recs in cats.items():
-            L += [f"## {cat} {cls}", "", "| 품목 | 단위 | 오늘(원) | 전일 | 1개월 전 | 평년 | 수준 |",
-                  "|---|---|--:|--:|--:|--:|:-:|"]
+            L += [f"## {cat} {cls}", "", "| 품목 | 단위 | 오늘(원) | 전일 | 1주 전 | 1개월 전 | 평년 | 수준 |", "|---|---|--:|--:|--:|--:|--:|:-:|"]
             for r in sorted(recs, key=lambda r: (r["base"] is None, -(r["base"] or 0))):
                 gname = GRADES[r["grade"]][0] if r["grade"] else "-"
-                L.append(f"| {r['label']} | {r['unit']} | {won(r['today'])} | {sp(r['d1'])} | "
-                         f"{sp(r['m1'])} | {sp(r['avg'])} | {gname} |")
+                L.append(f"| {r['label']} | {r['unit']} | {won(r['today'])} | {sp(r['d1'])} | {sp(r['w1'])} | {sp(r['m1'])} | {sp(r['avg'])} | {gname} |")
             L.append("")
-    L.append("자료: KAMIS 농산물유통정보 · 자동 생성")
+    L.append("자료: 한국농수산식품유통공사(aT) KAMIS 농산물유통정보 · 자동 생성")
     return no_dash("\n".join(L) + "\n")
 
 
@@ -501,27 +296,24 @@ def excel(path: Path, recs_by_cls: dict, history: list[dict], asof: str, cfg: di
     bold, thick, thin = Font(bold=True), Side(style="medium"), Side(style="thin", color="D9D9D9")
     for cls, cats in recs_by_cls.items():
         ws = wb.create_sheet(f"최신_{cls}")
-        hdr = ["부류", "품목", "단위", "오늘 가격(원)", "전일 대비(%)", "1주 전 대비(%)",
-               "1개월 전 대비(%)", "1년 전 대비(%)", "평년 대비(%)", "가격 수준"]
-        ws.append(hdr)
+        ws.append(["부류", "품목", "등급", "단위", "오늘 가격(원)", "전일 대비(%)", "1주 전 대비(%)",
+                   "1개월 전 대비(%)", "1년 전 대비(%)", "평년 대비(%)", "가격 수준"])
         for c in ws[1]:
             c.font, c.border, c.alignment = bold, Border(bottom=thick), Alignment(horizontal="center")
         for cat, recs in cats.items():
             for r in recs:
-                ws.append([cat, r["label"], r["unit"], r["today"]]
+                ws.append([cat, r["label"], r["rank"], r["unit"], r["today"]]
                           + [float(r[k]) if r[k] is not None else None for k in ("d1", "w1", "m1", "y1", "avg")]
                           + [GRADES[r["grade"]][0] if r["grade"] else None])
         for row in ws.iter_rows(min_row=2):
-            row[3].number_format = "#,##0"
-            for c in row[4:9]:
+            row[4].number_format = "#,##0"
+            for c in row[5:10]:
                 c.number_format = "+0.0;-0.0;0.0"
             for c in row:
                 c.border = Border(bottom=thin)
-        for i, w in enumerate([8, 24, 10, 13, 12, 13, 14, 13, 12, 10], 1):
+        for i, w in enumerate([8, 24, 8, 10, 13, 12, 13, 14, 13, 12, 10], 1):
             ws.column_dimensions[get_column_letter(i)].width = w
         ws.freeze_panes = "C2"
-
-    # 최근 이력 (행 = 시리즈, 열 = 날짜)
     start = (date.fromisoformat(asof) - timedelta(days=int(cfg.get("trend_days", 90)))).isoformat()
     hist = [h for h in history if start <= h["date"] <= asof]
     dates = sorted({h["date"] for h in hist})
@@ -535,32 +327,40 @@ def excel(path: Path, recs_by_cls: dict, history: list[dict], asof: str, cfg: di
     for c in ws[1]:
         c.font, c.border = bold, Border(bottom=thick)
     for sid, h in sorted(meta.items(), key=lambda kv: (kv[1]["cls_code"], kv[1]["cat_code"], kv[1]["item_code"])):
-        ws.append([h["cls_name"], h["cat_name"], h["item_name"], h["kind_name"], h["rank"], h["unit"]]
-                  + [grid[sid].get(d) for d in dates])
+        ws.append([h["cls_name"], h["cat_name"], h["item_name"], h["kind_name"], h["rank"], h["unit"]] + [grid[sid].get(d) for d in dates])
     for row in ws.iter_rows(min_row=2, min_col=7):
         for c in row:
             c.number_format = "#,##0"
     ws.freeze_panes = "G2"
+    ws2 = wb.create_sheet("자료출처")
+    ws2.append(["한국농수산식품유통공사(aT) KAMIS 농산물유통정보 일별 부류별 소매·도매 가격"])
+    ws2.append(["가격 수준: 평년(최근 5년 중 최대·최소 제외 평균) 대비 등락률 기준"])
     path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(path)
 
 
 # ---------- 검증 게이트 ----------
 
-def verify(html_text: str, recs_by_cls: dict) -> list[str]:
+def verify(html_text: str, n_bars: int | None = None, name: str = "index") -> list[str]:
     errs = []
     if "—" in html_text or "–" in html_text:
-        errs.append("줄표(—, –) 포함")
-    n_bars = sum(1 for cats in recs_by_cls.values() for rs in cats.values() for r in rs if r["base"] is not None)
+        errs.append(f"{name}: 줄표 포함")
     vals = re.findall(r'<span class="v">([^<]*)</span>', html_text)
-    if len(vals) != n_bars:
-        errs.append(f"막대 수치 라벨 수 불일치: {len(vals)} != {n_bars}")
+    if n_bars is not None and len(vals) != n_bars:
+        errs.append(f"{name}: 막대 수치 라벨 수 불일치 {len(vals)} != {n_bars}")
     if any(not v.strip() for v in vals):
-        errs.append("빈 막대 수치 라벨")
-    for txt in re.findall(r'<span class="n"[^>]*>(?:<b>)?([^<]*)', html_text) + re.findall(r'class="sv"[^>]*>([^<]*)<', html_text):
-        if re.search(r"\d{4,}", re.sub(r"\.\d+", "", txt)):  # 소수부는 떼고 정수부 자릿수만 검사
-            errs.append(f"천 단위 콤마 누락: {txt}")
+        errs.append(f"{name}: 빈 막대 수치 라벨")
+    texts = (re.findall(r'<span class="n"[^>]*>(?:<b>)?([^<]*)', html_text)
+             + re.findall(r'class="(?:sv|lab|lab sub|ax)"[^>]*>([^<]*)<', html_text)
+             + re.findall(r'<div class="big">([^<]*)<', html_text))
+    for txt in texts:
+        if re.fullmatch(r"\d{4}\.\d{2}", txt.strip()):  # 그래프 x축 연·월 표기
+            continue
+        if re.search(r"\d{4,}", re.sub(r"\.\d+", "", txt)):
+            errs.append(f"{name}: 천 단위 콤마 누락 {txt!r}")
             break
+    if re.search(r'class="lab[^"]*"[^>]*>\s*<', html_text):
+        errs.append(f"{name}: 빈 그래프 라벨")
     return errs
 
 
@@ -572,21 +372,26 @@ def main() -> int:
         return 1
     snap = store.load_snapshot(asof)
     history = store.read_history()
-    recs = build_records(snap, cfg, history)
+    recs, used = build_records(snap, cfg, history)
     if not recs:
         print("표시할 품목 없음")
         return 1
     s = summarize(recs)
+    fetched = snap.get("fetched_at", "")[:16].replace("T", " ")
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     (DOCS / "reports").mkdir(parents=True, exist_ok=True)
     archive = sorted({p.stem for p in (DOCS / "reports").glob("*.html")} | {asof}, reverse=True)
 
-    idx = page_html(snap, recs, s, history, cfg, archive, "")
-    arc = page_html(snap, recs, s, history, cfg, archive, "../")
-    errs = verify(idx, recs)
+    links, n_items = itemmod.build_item_pages(snap, cfg, history, fetched)
+    idx = page_html(snap, recs, s, history, cfg, archive, "", links, used)
+    arc = page_html(snap, recs, s, history, cfg, archive, "../", links, used)
+    n_bars = sum(1 for cats in recs.values() for rs in cats.values() for r in rs if r["base"] is not None)
+    errs = verify(idx, n_bars)
+    for p in sorted((DOCS / "items").glob("*.html")):
+        errs += verify(p.read_text(encoding="utf-8"), None, p.stem)
     if errs:
-        print("검증 실패:\n  " + "\n  ".join(errs))
+        print("검증 실패:\n  " + "\n  ".join(errs[:20]))
         return 2
 
     (DOCS / "index.html").write_text(idx, encoding="utf-8")
@@ -596,7 +401,7 @@ def main() -> int:
     (REPORTS / f"{asof}.md").write_text(md, encoding="utf-8")
     (REPORTS / "LATEST.md").write_text(md, encoding="utf-8")
     excel(DOCS / "fruitbasket_prices.xlsx", recs, history, asof, cfg)
-    print(f"리포트 생성 {asof}: {s['headline']}")
+    print(f"리포트 생성 {asof}: {s['headline']} (품목 페이지 {n_items:,}개)")
     return 0
 
 
