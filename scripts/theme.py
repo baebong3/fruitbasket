@@ -176,7 +176,7 @@ h3{{font-size:13px;margin:20px 0 10px;color:var(--sub);font-weight:700;letter-sp
 .neg,.pos{{display:flex;align-items:center;gap:7px}}.neg{{justify-content:flex-end;border-right:1px solid var(--ink);padding-right:2px}}.pos{{padding-left:2px}}
 .bt i{{display:block;height:11px;border-radius:999px}}.v{{font-size:13px;font-weight:800;white-space:nowrap}}
 .note,.empty{{color:var(--sub);font-size:12.5px;margin:10px 0 0}}
-.tw{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
+.tw{{overflow-x:auto;-webkit-overflow-scrolling:touch}}.tf table{{min-width:0}}.tf td.l,.tf th.l{{position:static;white-space:normal;word-break:keep-all}}.tf .n{{min-width:0}}
 table{{border-collapse:collapse;width:100%;min-width:780px;font-size:14px}}
 th{{font-size:12.5px;color:var(--sub);font-weight:700;padding:9px 6px;border-bottom:1.5px solid var(--ink);white-space:nowrap;text-align:center}}
 td{{padding:9px 6px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}}
@@ -224,7 +224,7 @@ footer a{{color:var(--acc);font-weight:700;text-decoration:none;white-space:nowr
 .pos-lab{{display:flex;justify-content:space-between;font-size:11.5px;color:var(--sub)}}
 @media (max-width:760px){{.hero{{grid-template-columns:1fr;gap:18px}}.kpis{{border-left:0;padding-left:0;border-top:1px solid var(--line)}}.prices{{grid-template-columns:1fr}}.two{{grid-template-columns:1fr}}.ihead h1{{font-size:27px}}}}
 @media (max-width:640px){{.cd{{display:none}}.cm{{display:block}}.wrap{{padding:0 16px 48px}}h1{{font-size:23px}}.kpi .x{{font-size:23px}}table{{min-width:0;font-size:13.5px}}td.u,th.u{{display:none}}.fl{{display:none}}.mn{{display:inline}}.lu{{display:block;font-size:11.5px;color:var(--sub);font-weight:500;white-space:normal;word-break:keep-all;max-width:9.5em}}.n{{min-width:0}}.badge{{padding:2px}}.badge em{{display:none}}th,td{{padding:8px 5px}}.bl{{font-size:13px;line-height:1.25}}.bl small{{display:block;font-size:11px;color:var(--sub);font-weight:500}}.bt{{height:auto;min-height:24px}}.v{{font-size:12.5px}}.seg{{gap:18px}}.mini{{grid-template-columns:repeat(2,1fr)}}.stat{{grid-template-columns:1fr 1fr}}.meta{{text-align:left}}}}
-@media (max-width:420px){{table{{font-size:12.5px}}th,td{{padding:8px 3px}}.tw{{margin:0 -4px}}.pc .big{{font-size:28px}}}}
+@media (max-width:420px){{table{{font-size:12.5px}}th,td{{padding:8px 3px}}.tw{{margin:0 -4px}}.pc .big{{font-size:28px}}.tf table{{font-size:12px}}.tf th,.tf td{{padding:7px 2px}}.tf .badge{{padding:1px}}}}
 """
 
 

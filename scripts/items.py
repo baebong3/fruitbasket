@@ -385,9 +385,9 @@ def build_item_pages(snap: dict, cfg: dict, history: list[dict], fetched: str) -
             body = "".join(
                 f'<tr><td class="l">{r["m"][:4]}년 {int(r["m"][5:])}월</td><td><span class="n">{r["avg"]:,}</span></td>'
                 f'<td><span class="n">{r["lo"]:,}</span></td><td><span class="n">{r["hi"]:,}</span></td>'
-                f'<td>{chg_span(r["chg"])}</td><td><span class="n">{r["n"]:,}</span></td></tr>' for r in reversed(mrows))
-            mtab = (f'<div class="tw"><table style="min-width:0"><thead><tr><th class="l">월</th><th>평균(원)</th><th>최저(원)</th>'
-                    f'<th>최고(원)</th><th>전월 대비</th><th>조사일</th></tr></thead><tbody>{body}</tbody></table></div>')
+                f'<td>{chg_span(r["chg"])}</td></tr>' for r in reversed(mrows))
+            mtab = (f'<div class="tf"><table><thead><tr><th class="l">월</th><th>평균(원)</th><th>최저(원)</th>'
+                    f'<th>최고(원)</th><th>전월 대비</th></tr></thead><tbody>{body}</tbody></table></div>')
 
         # 1년 위치
         yr_vals = [v for _, v in period_points(main_series, asof, 365)]
@@ -421,7 +421,7 @@ def build_item_pages(snap: dict, cfg: dict, history: list[dict], fetched: str) -
                 rank_rows.append(f'<tr><td class="l">{cls_name} {esc(it["rank"])}</td><td class="u">{esc(it["unit"])}</td>'
                                  f'<td><span class="n"><b>{won(pp["today"])}</b></span></td><td>{chg_span(pct(pp["today"], pp.get("d1")))}</td>'
                                  f'<td>{chg_span(b)}</td><td>{badge(grade_for(b, g_cfg), 15)}</td></tr>')
-        rank_tab = (f'<div class="tw"><table style="min-width:0"><thead><tr><th class="l">구분</th><th class="u">단위</th><th>오늘(원)</th>'
+        rank_tab = (f'<div class="tf"><table><thead><tr><th class="l">구분</th><th class="u">단위</th><th>오늘(원)</th>'
                     f'<th>전일 대비</th><th>평년 대비</th><th>수준</th></tr></thead><tbody>{"".join(rank_rows)}</tbody></table></div>')
 
         sub = " · ".join(x for x in (e["cat"], f"품종 {e['kind']}" if e["kind"] else "", f"{main_cls} {main_it['rank']} {main_it['unit']} 기준") if x)
