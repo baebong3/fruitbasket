@@ -149,7 +149,8 @@ header{{display:flex;justify-content:space-between;align-items:center;gap:12px;f
 .brand{{display:flex;align-items:center;gap:12px;text-decoration:none}}.brand b{{font-size:23px;font-weight:700;letter-spacing:-.02em;display:block;line-height:1.1}}
 .brand small{{display:block;font-size:10.5px;color:var(--gold);font-weight:700;letter-spacing:.2em;margin-top:4px}}
 .meta{{font-size:12.5px;color:var(--sub);text-align:right;line-height:1.5}}.meta b{{color:var(--ink);font-weight:700}}
-.src{{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--sub)}}.src i{{font-style:normal;font-weight:800;color:var(--acc);border:1.5px solid var(--acc);border-radius:4px;padding:0 5px;font-size:11px;letter-spacing:.02em}}
+.src{{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--sub)}}.src img{{display:block;height:19px;width:auto}}.srcl{{font-size:11px;letter-spacing:.04em}}.srck{{font-size:11px;font-weight:700;color:#1F4A3A;border-left:1px solid var(--line);padding-left:8px}}
+.fsrc{{display:flex;align-items:center;gap:14px;flex-wrap:wrap}}.fsrc img{{height:24px;width:auto;flex:none}}.fsrc span{{flex:1;min-width:240px}}.src i{{font-style:normal;font-weight:800;color:var(--acc);border:1.5px solid var(--acc);border-radius:4px;padding:0 5px;font-size:11px;letter-spacing:.02em}}
 .hero{{display:grid;grid-template-columns:1.35fr 1fr;gap:28px;padding:30px 0 26px;border-bottom:1px solid var(--line);align-items:start}}
 .eyebrow{{font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--gold);text-transform:uppercase;margin-bottom:10px}}
 h1{{font-family:"Noto Serif KR",Pretendard,serif;font-size:30px;line-height:1.42;letter-spacing:-.02em;margin:0 0 18px;word-break:keep-all;font-weight:700}}
@@ -223,7 +224,7 @@ footer a{{color:var(--acc);font-weight:700;text-decoration:none;white-space:nowr
 .pos-bar i{{position:absolute;top:-4px;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--ink);margin-left:-8px}}
 .pos-lab{{display:flex;justify-content:space-between;font-size:11.5px;color:var(--sub)}}
 @media (max-width:760px){{.hero{{grid-template-columns:1fr;gap:18px}}.kpis{{border-left:0;padding-left:0;border-top:1px solid var(--line)}}.prices{{grid-template-columns:1fr}}.two{{grid-template-columns:1fr}}.ihead h1{{font-size:27px}}}}
-@media (max-width:640px){{.cd{{display:none}}.cm{{display:block}}.wrap{{padding:0 16px 48px}}h1{{font-size:23px}}.kpi .x{{font-size:23px}}table{{min-width:0;font-size:13.5px}}td.u,th.u{{display:none}}.fl{{display:none}}.mn{{display:inline}}.lu{{display:block;font-size:11.5px;color:var(--sub);font-weight:500;white-space:normal;word-break:keep-all;max-width:9.5em}}.n{{min-width:0}}.badge{{padding:2px}}.badge em{{display:none}}th,td{{padding:8px 5px}}.bl{{font-size:13px;line-height:1.25}}.bl small{{display:block;font-size:11px;color:var(--sub);font-weight:500}}.bt{{height:auto;min-height:24px}}.v{{font-size:12.5px}}.seg{{gap:18px}}.mini{{grid-template-columns:repeat(2,1fr)}}.stat{{grid-template-columns:1fr 1fr}}.meta{{text-align:left}}}}
+@media (max-width:640px){{.meta .src{{margin-bottom:2px}}.cd{{display:none}}.cm{{display:block}}.wrap{{padding:0 16px 48px}}h1{{font-size:23px}}.kpi .x{{font-size:23px}}table{{min-width:0;font-size:13.5px}}td.u,th.u{{display:none}}.fl{{display:none}}.mn{{display:inline}}.lu{{display:block;font-size:11.5px;color:var(--sub);font-weight:500;white-space:normal;word-break:keep-all;max-width:9.5em}}.n{{min-width:0}}.badge{{padding:2px}}.badge em{{display:none}}th,td{{padding:8px 5px}}.bl{{font-size:13px;line-height:1.25}}.bl small{{display:block;font-size:11px;color:var(--sub);font-weight:500}}.bt{{height:auto;min-height:24px}}.v{{font-size:12.5px}}.seg{{gap:18px}}.mini{{grid-template-columns:repeat(2,1fr)}}.stat{{grid-template-columns:1fr 1fr}}.meta{{text-align:left}}}}
 @media (max-width:420px){{table{{font-size:12.5px}}th,td{{padding:8px 3px}}.tw{{margin:0 -4px}}.pc .big{{font-size:28px}}.tf table{{font-size:12px}}.tf th,.tf td{{padding:7px 2px}}.tf .badge{{padding:1px}}}}
 
 /* 알뜰 요리 · 장바구니 지수 */
@@ -278,8 +279,8 @@ def shell(title: str, body: str, rel: str, asof: str, fetched: str, extra_meta: 
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">
 <title>{esc(title)}</title>{FONTS}<style>{CSS}</style></head><body>{icons.sprite()}<div class="wrap">
 <header><a class="brand" href="{rel}index.html">{LOGO}<div><b class="serif">과일바구니</b><small>FRUIT BASKET · DAILY PRICE</small></div></a>
-<div class="meta"><span class="src"><i>aT</i>{esc(SOURCE_SHORT[4:])}</span><br>조사일 <b>{kdate(asof)}</b> · 갱신 {esc(fetched)}{extra_meta}</div></header>
+<div class="meta"><span class="src"><span class="srcl">자료 제공</span><img src="{rel}assets/at_ci.png" alt="한국농수산식품유통공사(aT)" width="140" height="19"><span class="srck">KAMIS</span></span><br>조사일 <b>{kdate(asof)}</b> · 갱신 {esc(fetched)}{extra_meta}</div></header>
 {body}
-<footer><span>{esc(SOURCE_LONG)}</span><span>매일 자동 수집·생성 · <a href="{rel}fruitbasket_prices.xlsx">엑셀 받기</a></span></footer>
+<footer><span class="fsrc"><img src="{rel}assets/at_ci.png" alt="한국농수산식품유통공사(aT)" width="176" height="24"><span>{esc(SOURCE_LONG)}</span></span><span>매일 자동 수집·생성 · <a href="{rel}fruitbasket_prices.xlsx">엑셀 받기</a></span></footer>
 </div></body></html>"""
     return no_dash(out)
