@@ -3,13 +3,74 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+import store
+
 import icons
 from items import grade_for
 from pricing import PriceBook, load_yaml, rint
 from theme import GRADES, badge, esc, pct, sp, won, label_of
 
 
-def compute_recipes(book: PriceBook, g_cfg: dict) -> list[dict]:
+COURSES = ["메인·한 그릇", "국·찌개", "반찬·김치", "샐러드·디저트"]
+# 거의 모든 요리에 들어가는 양념 채소 : 요리끼리 비슷한지 따질 때 뺌
+AROMATICS = {"파", "깐마늘(국산)", "양파", "고춧가루", "풋고추", "붉은고추", "생강"}
+
+
+def course_of(tags: list[str]) -> str:
+    t = set(tags)
+    if t & {"메인", "한 그릇"}:
+        return "메인·한 그릇"
+    if t & {"국", "찌개"}:
+        return "국·찌개"
+    if t & {"샐러드", "디저트", "음료"}:
+        return "샐러드·디저트"
+    return "반찬·김치"
+
+
+def _core(r: dict) -> set:
+    return {i["name"] for i in r["ingredients"] if i["name"] not in AROMATICS}
+
+
+def _main_name(r: dict) -> str:
+    return next((i["name"] for i in r["ingredients"] if i["main"]), r["ingredients"][0]["name"])
+
+
+def diversify(picks: list[dict], recent: set) -> list[dict]:
+    """추천 요리 순서 : 절약 폭이 큰 순을 기본으로, 요리 종류·주재료·재료 구성이 겹치지 않게 고름.
+    첫 4개는 요리 종류 4가지에서 하나씩(가능한 만큼), 주재료는 전체 목록에서 되도록 한 번씩만.
+    최근 3일 첫 화면에 나온 요리는 뒤로 미뤄 날마다 바뀌게 함"""
+    def base(r):
+        return float(-(r["saving_pct"] or 0)) * 0.6 + float(-(r["main_base"] or 0)) * 0.4
+
+    pool, out = list(picks), []
+    while pool:
+        courses = [x["course"] for x in out]
+        mains = {x["main_name"] for x in out}
+        cands = pool
+        if len(out) < len(COURSES):
+            fresh = [r for r in pool if r["course"] not in courses and r["main_name"] not in mains]
+            cands = fresh or [r for r in pool if r["main_name"] not in mains] or pool
+
+        def score(r):
+            sc = base(r)
+            if r["main_name"] in mains:
+                sc -= 25
+            sc -= 6 * courses.count(r["course"])
+            if out:
+                core = r["core"]
+                sim = max((len(core & x["core"]) / len(core | x["core"])) if core | x["core"] else 0 for x in out)
+                sc -= 20 * sim
+            if r["name"] in recent:
+                sc -= 15
+            return sc
+
+        best = max(cands, key=lambda r: (score(r), r["name"]))
+        out.append(best)
+        pool.remove(best)
+    return out
+
+
+def compute_recipes(book: PriceBook, g_cfg: dict, recent: set | None = None, month: int | None = None) -> list[dict]:
     out = []
     for r in load_yaml("recipes.yml"):
         ings, missing = [], []
@@ -63,12 +124,30 @@ def compute_recipes(book: PriceBook, g_cfg: dict) -> list[dict]:
             "kamis_cost": kamis, "staple_cost": st_cost, "total": kamis + st_cost,
             "per_serving": rint(Decimal(kamis + st_cost) / Decimal(r["servings"])),
             "avg_cost": avg_cost, "y1_cost": y1_cost, "saving": saving, "saving_pct": saving_pct,
-            "main_grade": main_grade, "main_base": main_base,
-            "pick": main_grade == "GREEN" and saving_pct is not None and saving_pct < 0,
+            "main_grade": main_grade, "main_base": main_base, "course": course_of(r.get("tags", [])),
+            "in_season": not r.get("months") or month is None or month in r["months"],
         })
-    # 추천 : 주재료가 평년보다 싸고(GREEN) 재료비 절약률이 큰 순
-    out.sort(key=lambda x: (not x["pick"], x["saving_pct"] if x["saving_pct"] is not None else Decimal(0)))
-    return out
+        rec = out[-1]
+        rec["pick"] = main_grade == "GREEN" and saving_pct is not None and saving_pct < 0 and rec["in_season"]
+        rec["main_name"], rec["core"] = _main_name(rec), _core(rec)
+    # 추천 : 주재료가 평년보다 싸고(GREEN) 재료비가 평년보다 덜 드는 요리를 다양하게
+    picks = diversify([x for x in out if x["pick"]], recent or set())
+    others = sorted((x for x in out if not x["pick"]),
+                    key=lambda x: (COURSES.index(x["course"]), x["saving_pct"] if x["saving_pct"] is not None else Decimal(0)))
+    return picks + others
+
+
+def recent_featured(asof: str, cfg: dict, days: int = 3, top: int = 3) -> set:
+    """직전 조사일 며칠 동안 첫 화면(상위 top개)에 나온 요리 이름. 오래된 날부터 차례로 계산해 실제 노출 순서를 재현"""
+    import json
+    snaps = sorted(p for p in (store.ROOT / "data" / "snapshots").glob("*.json") if p.stem < asof)[-days:]
+    shown: list[set] = []
+    for p in snaps:
+        snap = json.loads(p.read_text(encoding="utf-8"))
+        prev = set().union(*shown) if shown else set()
+        rs = compute_recipes(PriceBook(snap, cfg), cfg["grade"], prev, int(p.stem[5:7]))
+        shown.append({r["name"] for r in rs[:top] if r["pick"]})
+    return set().union(*shown) if shown else set()
 
 
 def recipe_card(r: dict, rel: str, links: dict, full: bool) -> str:

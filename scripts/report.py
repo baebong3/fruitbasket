@@ -267,7 +267,7 @@ def page_html(snap: dict, recs_by_cls: dict, s: dict, history: list[dict], cfg: 
              f'<a href="#basket">CPI 비교</a></div>')
     n_pick = sum(1 for r in recipes if r["pick"])
     kitchen_html = (f'<div class="card" id="kitchen"><h2>오늘의 알뜰 요리<small>평년보다 싼 재료로 · <a href="{rel}recipes.html">레시피 {len(recipes):,}개 모두 보기 ›</a></small></h2>'
-                    f'<p class="lead">주재료가 평년보다 싼 요리 {n_pick:,}가지 중 재료비 절약률이 큰 순. 비용은 KAMIS 소매 가격으로 계산한 농산물 재료비이고, 계란·두부 등은 참고가</p>'
+                    f'<p class="lead">주재료가 평년보다 싼 요리 {n_pick:,}가지 중 요리 종류와 주재료가 겹치지 않게 3가지 (최근 3일 소개한 요리는 뒤로). 비용은 KAMIS 소매 가격으로 계산한 농산물 재료비이고, 계란·두부 등은 참고가</p>'
                     f'<div class="rgrid">{"".join(kitchen.recipe_card(r, rel, links, False) for r in recipes[:3])}</div></div>')
     body = shopping.hero_html(sh, bk, s, rel) + quick + f"""
 {shopping.basket_html(rb, rel, links)}
@@ -395,7 +395,7 @@ def main() -> int:
 
     links, n_items = itemmod.build_item_pages(snap, cfg, history, fetched)
     book = PriceBook(snap, cfg, itemmod.series_index(history))
-    recipes = kitchen.compute_recipes(book, cfg["grade"])
+    recipes = kitchen.compute_recipes(book, cfg["grade"], kitchen.recent_featured(asof, cfg), int(asof[5:7]))
     bk = basketmod.build(book, history, asof)
     sh = shopping.compute_index(bk)
     rb = shopping.recommend_basket(book, cfg["grade"], recipes)
@@ -407,9 +407,13 @@ def main() -> int:
     others = [r for r in recipes if not r["pick"]]
     rec_body = (f'<div class="card"><h2>오늘의 알뜰 요리<small>{esc(kdate(asof))} KAMIS 소매 가격 기준</small></h2>'
                 f'<p class="lead">주재료가 평년보다 싼 요리 {len(picks):,}가지. 재료비는 조사 가격 × 레시피 수량으로 계산하고, '
-                f'계란·두부·고기 등 조사하지 않는 재료는 참고가(data/staples.yml)로 더함. 기본 양념은 비용에서 제외</p>'
-                f'<div class="rgrid full">{"".join(kitchen.recipe_card(r, "", links, True) for r in picks)}</div></div>'
-                + (f'<div class="card"><h2>오늘은 평년 수준이거나 비싼 재료<small>주재료 가격 수준 보통 이상</small></h2>'
+                f'계란·두부·고기 등 조사하지 않는 재료는 참고가(data/staples.yml)로 더함. 기본 양념은 비용에서 제외. '
+                f'첫 화면에는 요리 종류와 주재료가 겹치지 않게 고르고, 최근 3일 동안 소개한 요리는 뒤로 미룸</p>'
+                + "".join(f'<h3 class="course">{c}<small>{sum(1 for r in picks if r["course"] == c):,}가지</small></h3>'
+                          f'<div class="rgrid full">{"".join(kitchen.recipe_card(r, "", links, True) for r in picks if r["course"] == c)}</div>'
+                          for c in kitchen.COURSES if any(r["course"] == c for r in picks))
+                + '</div>'
+                + (f'<div class="card"><h2>오늘은 평년 수준이거나 비싼 재료<small>주재료 가격 수준 보통 이상이거나 제철이 아닌 요리</small></h2>'
                    f'<div class="rgrid full">{"".join(kitchen.recipe_card(r, "", links, True) for r in others)}</div></div>' if others else ""))
     rec_html = shell("오늘의 알뜰 요리 - 과일바구니", rec_body, "", asof, fetched)
     bk_html = shell("과일바구니 장바구니 지수", basketmod.section_html(bk, "", links, True), "", asof, fetched)

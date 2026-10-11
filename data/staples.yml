@@ -36,6 +36,8 @@ piece_g:
   브로콜리: 300
   깻잎: 2          # 1장
   포도: 500
+  블루베리: 1
+  부추: 100       # 1줌
 
 # KAMIS 가 조사하지 않는 재료의 참고가 (단위당, 원) - 대형마트 통상가 기준 추정치
 staples:
@@ -52,3 +54,11 @@ staples:
   그래놀라: {unit: 100g, price: 1200, per_g: 12}
   식빵: {unit: 장, price: 250}
   밥: {unit: 공기, price: 400}
+  쌀: {unit: 100g, price: 400, per_g: 4}
+  소면: {unit: 100g, price: 300, per_g: 3}
+  파스타면: {unit: 100g, price: 400, per_g: 4}
+  어묵: {unit: 100g, price: 900, per_g: 9}
+  바지락: {unit: 100g, price: 1200, per_g: 12}
+  소고기(불고기): {unit: 100g, price: 4500, per_g: 45}
+  모짜렐라치즈: {unit: 100g, price: 2200, per_g: 22}
+  김: {unit: 장, price: 200}

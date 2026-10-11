@@ -229,12 +229,13 @@ footer a{{color:var(--acc);font-weight:700;text-decoration:none;white-space:nowr
 
 /* 알뜰 요리 · 장바구니 지수 */
 .lead{{font-size:14px;color:var(--sub);margin:4px 0 14px;word-break:keep-all}}
+.course{{font-size:15px;margin:22px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);color:var(--ink);font-weight:700}}.course small{{margin-left:8px;color:var(--sub);font-weight:500;font-size:13px}}
 .rgrid{{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}}.rgrid.full{{grid-template-columns:repeat(2,1fr)}}
 .rc{{border:1px solid var(--line);border-radius:8px;padding:16px 16px 12px;min-width:0}}
 .rc-h{{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}}.rc h3{{font-size:19px;margin:0;color:var(--ink);letter-spacing:-.02em;font-weight:700}}
 .rc-save{{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}}.rc-save.muted{{background:var(--paper);color:var(--sub)}}
 .rc-meta{{font-size:12.5px;color:var(--sub);margin:4px 0 10px}}
-.rt{{min-width:0;font-size:13px}}.rt th{{white-space:nowrap}}.rt th,.rt td{{padding:6px 4px}}.rt td{{white-space:normal}}.rt.compact td.u,.rt.compact th.u{{display:none}}.rt td.l,.rt th.l{{position:static;padding-left:0;white-space:normal;word-break:keep-all}}.rt .n{{min-width:0}}
+.rt{{min-width:0;font-size:13px}}.rt th{{white-space:nowrap}}.rt th,.rt td{{padding:6px 4px}}.rt td{{white-space:normal}}.rt.compact td.u,.rt.compact th.u{{display:none}}.rt td.l,.rt th.l{{position:static;padding-left:0;white-space:normal;word-break:keep-all}}.rt .n{{min-width:0}}.rt td:nth-child(2){{white-space:nowrap}}
 .rt td.l small{{display:block;font-size:11px;color:var(--sub);font-weight:500}}.rt .main{{font-size:10.5px;color:var(--acc);font-weight:800;margin-left:4px;vertical-align:1px}}
 .rt tr.st td{{color:var(--sub)}}.rt td.u,.rt th.u{{font-size:12px;color:var(--sub)}}
 .rc-cost{{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;margin:10px 0 4px;color:var(--sub)}}.rc-cost b{{color:var(--ink)}}.rc-cost .sub{{width:100%;font-size:12px}}
