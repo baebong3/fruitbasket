@@ -1,9 +1,9 @@
 {
- "last_run": "2026-10-14T01:51:08+09:00",
- "result": "new_data",
- "survey_date": "2026-10-13",
+ "last_run": "2026-10-14T23:26:37+09:00",
+ "result": "error",
+ "survey_date": null,
  "latest_saved_date": "2026-10-13",
  "history_rows": 42855,
  "history_days": 246,
- "message": ""
+ "message": "KAMIS 요청 실패 (400/01/2026-10-14): 406 Client Error: Not Acceptable for url: https://www.kamis.or.kr/service/price/xml.do?action=dailyPriceByCategoryList&p_product_cls_code=01&p_country_code=&p_regday=2026-10-14&p_convert_kg_yn=N&p_item_category_code=400&p_cert_key=bdf6f01b-c039-4c9a-aed0-ddd910b6ebd2"
 }
