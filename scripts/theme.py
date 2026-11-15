@@ -279,7 +279,7 @@ def shell(title: str, body: str, rel: str, asof: str, fetched: str, extra_meta: 
     out = f"""<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">
 <title>{esc(title)}</title>{FONTS}<style>{CSS}</style></head><body>{icons.sprite()}<div class="wrap">
-<header><a class="brand" href="{rel}index.html">{LOGO}<div><b class="serif">과일바구니</b><small>FRUIT BASKET · DAILY PRICE</small></div></a>
+<header><a class="brand" href="{rel}index.html">{LOGO}<div><b class="serif">농산물 가격동향</b><small>KAMIS · 매일 업데이트</small></div></a>
 <div class="meta"><span class="src"><span class="srcl">자료 제공</span><img src="{rel}assets/at_ci.png" alt="한국농수산식품유통공사(aT)" width="140" height="19"><span class="srck">KAMIS</span></span><br>조사일 <b>{kdate(asof)}</b> · 갱신 {esc(fetched)}{extra_meta}</div></header>
 {body}
 <footer><span class="fsrc"><img src="{rel}assets/at_ci.png" alt="한국농수산식품유통공사(aT)" width="176" height="24"><span>{esc(SOURCE_LONG)}</span></span><span>매일 자동 수집·생성 · <a href="{rel}fruitbasket_prices.xlsx">엑셀 받기</a></span></footer>

@@ -110,7 +110,7 @@ def page(body: str, n: int, total: int, asof: str) -> str:
     logo = LOGO.replace('width="42" height="42"', 'width="56" height="56"')
     return no_dash(f"""<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>{font_css()}{CSS}</style></head>
 <body>{icons.sprite()}<div class="card">
-<div class="top"><div class="brand">{logo}<div><b>과일바구니</b><small>DAILY PRICE BRIEF</small></div></div>
+<div class="top"><div class="brand">{logo}<div><b>농산물 가격동향</b><small>DAILY PRICE BRIEF</small></div></div>
 <div class="date"><b>{kd(asof)}</b>소매 가격 기준</div></div>
 {body}
 <div class="foot"><span style="display:flex;align-items:center;gap:12px">자료 <img src="{AT_LOGO.as_uri()}"> KAMIS</span><span class="pg">{n} / {total}</span></div>
@@ -259,7 +259,7 @@ def caption(d: dict, causes: list[dict] | None) -> str:
             pricey.append(r); seen.add(r["name"])
     pick = next((r for r in d["recipes"] if r["pick"]), None)
     idx = bk["idx_avg_all"]
-    L = [f"[{kd(asof)} 과일바구니 장보기 브리핑]", "",
+    L = [f"[{kd(asof)} 농산물 가격동향 장보기 브리핑]", "",
          f"장보기 지수 {sh['score']} · {sh['name']}",
          s["headline"].replace(" - ", "\n"), "",
          f"▪ 4인 가구 1주일 과일·채소 장바구니 {won(bk['today'])}원 (평년 가격이면 {won(bk['cost_avg_all'])}원)"]
@@ -275,7 +275,7 @@ def caption(d: dict, causes: list[dict] | None) -> str:
         L += ["", f"오늘의 알뜰 요리: {pick['name']} ({pick['servings']}인분 재료비 {won(pick['total'])}원, 평년보다 {abs(pick['saving_pct']):,.1f}% 절약)"]
     L += ["", "품목별 가격·추이·레시피 전체는 프로필 링크에서",
           f"자료: 한국농수산식품유통공사(aT) KAMIS 농산물유통정보, {kd(asof)} 소매 가격(대표 등급) · 평년은 최근 5년 중 최대·최소를 뺀 평균", "",
-          "#과일바구니 #장보기 #장바구니물가 #농산물가격 #오늘의시세 #채소값 #과일값 #물가 #알뜰장보기 #집밥 "
+          "#농산물가격동향 #장보기 #장바구니물가 #농산물가격 #오늘의시세 #채소값 #과일값 #물가 #알뜰장보기 #집밥 "
           + " ".join(f"#{r['name']}" for r in cheap[:3])]
     return no_dash("\n".join(L))
 

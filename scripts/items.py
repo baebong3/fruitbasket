@@ -447,14 +447,14 @@ def build_item_pages(snap: dict, cfg: dict, history: list[dict], fetched: str) -
                     f'<th>전일 대비</th><th>평년 대비</th><th>수준</th></tr></thead><tbody>{"".join(rank_rows)}</tbody></table></div>')
 
         sub = " · ".join(x for x in (e["cat"], f"품종 {e['kind']}" if e["kind"] else "", f"{main_cls} {main_it['rank']} {main_it['unit']} 기준") if x)
-        body = f"""<div class="crumb"><a href="../index.html">과일바구니</a> › {esc(e["cat"])} › {esc(label)}</div>
+        body = f"""<div class="crumb"><a href="../index.html">농산물 가격동향</a> › {esc(e["cat"])} › {esc(label)}</div>
 <div class="ihead"><div><div class="ico">{icons.item_icon(e["name"], 64, "ic big")}</div><div><h1>{esc(label)}</h1><div class="sub">{esc(sub)}</div></div></div>{badge(grade, 22) if grade else ""}</div>
 <div class="prices">{price_card("소매", retail, True, g_cfg)}{price_card("도매", whole, False, g_cfg)}</div>
 <div class="card"><h2>가격 추이<small>{esc(main_cls)} {esc(main_it["rank"])} · {esc(main_it["unit"])} · 점선은 평년 가격</small></h2>{chart_html}{pos_html}{stat}</div>
 <div class="card"><div class="two"><div><h2>오늘의 리포트</h2><h3>{esc(kdate(asof))} 기준</h3>{verdict}<ul class="rep">{rep}</ul></div>
 <div><h2>월별 가격</h2><h3>최근 1년, {esc(main_cls)} {esc(main_it["rank"])} 기준</h3>{mtab or '<p class="empty">월별 이력 없음</p>'}</div></div></div>
 <div class="card"><h2>등급별 오늘 가격</h2>{rank_tab}</div>"""
-        html = shell(f"{label} 가격 - 과일바구니", body, "../", asof, fetched)
+        html = shell(f"{label} 가격 - 농산물 가격동향", body, "../", asof, fetched)
         (out_dir / f"{page_key(ic, kc)}.html").write_text(html, encoding="utf-8")
         links[(ic, kc)] = page_path(ic, kc)
         made += 1

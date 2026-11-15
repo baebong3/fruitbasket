@@ -124,7 +124,7 @@ def section_html(b: dict, rel: str, links: dict, full: bool) -> str:
         ev = es.get(ext_key, {}).get(ext_field)
         return (f'<tr><td class="l">{esc(name)}</td><td>{chg_span(ours)}</td>'
                 f'<td>{chg_span(Decimal(str(ev)).quantize(Decimal("0.1")) if ev is not None else None)}</td></tr>')
-    cmp_tab = (f'<table class="rt cmp"><thead><tr><th class="l">전년 동기 대비</th><th>과일바구니 지수</th><th>국가데이터처<br><small>{esc(ext["reference_month"][:4])}년 {int(ext["reference_month"][5:])}월</small></th></tr></thead><tbody>'
+    cmp_tab = (f'<table class="rt cmp"><thead><tr><th class="l">전년 동기 대비</th><th>장바구니 지수</th><th>국가데이터처<br><small>{esc(ext["reference_month"][:4])}년 {int(ext["reference_month"][5:])}월</small></th></tr></thead><tbody>'
                + cmp_row("과일 (신선과실)", yoy_pct(b["idx_y1_과일"]), "신선과실")
                + cmp_row("채소 (신선채소)", yoy_pct(b["idx_y1_채소"]), "신선채소")
                + cmp_row("과일+채소 (신선식품)", yoy_pct(b["idx_y1_all"]), "신선식품지수")
@@ -133,7 +133,7 @@ def section_html(b: dict, rel: str, links: dict, full: bool) -> str:
                + f'<tr><td class="l">참고 · 생활물가지수</td><td>-</td><td>{chg_span(Decimal(str(es["생활물가지수"]["yoy"])).quantize(Decimal("0.1")) if "생활물가지수" in es else None)}</td></tr>'
                + f'<tr><td class="l">전월 대비 (신선식품)</td><td>{chg_span(yoy_pct(b["idx_m1_all"]))}</td><td>{chg_span(Decimal(str(es.get("신선식품지수", {}).get("mom"))).quantize(Decimal("0.1")) if es.get("신선식품지수", {}).get("mom") is not None else None)}</td></tr>'
                + "</tbody></table>")
-    kpis = (f'<div class="bk"><div class="bk-main"><div class="k">과일바구니 지수 <small>평년 = 100</small></div>'
+    kpis = (f'<div class="bk"><div class="bk-main"><div class="k">장바구니 지수 <small>평년 = 100</small></div>'
             f'<div class="x" style="color:{color}">{idx if idx is not None else "-"}</div><div class="v">{esc(verdict)}</div></div>'
             f'<div class="bk-grid">'
             f'<div><div class="k">과일 지수</div><div class="x2">{b["idx_avg_과일"] if b["idx_avg_과일"] is not None else "-"}</div></div>'
@@ -146,7 +146,7 @@ def section_html(b: dict, rel: str, links: dict, full: bool) -> str:
         chart = (f'<h3>장바구니 비용 추이 <span class="muted">최근 1년, 원</span></h3><div class="cd">{line_chart(b["series"], ACC, b["cost_avg_all"], "평년")}</div>'
                  f'<div class="cm">{line_chart(b["series"], ACC, b["cost_avg_all"], "평년", W=400, H=250)}</div>')
     note = (f'<p class="note">{esc(b["spec"]["household"])} 과일·채소 {len(b["rows"])}종 고정 장바구니를 KAMIS 소매 가격(대표 등급)으로 계산. '
-            f'지수는 같은 장바구니를 평년 가격으로 샀을 때를 100으로 둔 값. 전년·전월 비교는 국가데이터처 소비자물가동향의 신선식품지수(전년동월비·전월비)와 같은 방향으로 읽되, 과일바구니 지수는 조사일 하루 가격이고 국가데이터처는 월평균·전국 가중치라 수준은 다를 수 있음. '
+            f'지수는 같은 장바구니를 평년 가격으로 샀을 때를 100으로 둔 값. 전년·전월 비교는 국가데이터처 소비자물가동향의 신선식품지수(전년동월비·전월비)와 같은 방향으로 읽되, 장바구니 지수는 조사일 하루 가격이고 국가데이터처는 월평균·전국 가중치라 수준은 다를 수 있음. '
             f'외부 지표 출처: <a href="{esc(ext["source_url"])}">{esc(ext["source_name"])}</a> ({esc(ext["published"])} 발표)</p>')
     if not full:
         return (f'<div class="card" id="basket"><h2>장바구니 지수와 공개 물가지표 비교<small><a href="{rel}basket.html">상세 보기 ›</a></small></h2>'
@@ -161,6 +161,6 @@ def section_html(b: dict, rel: str, links: dict, full: bool) -> str:
                     f'<td>{chg_span(pct(rint(r["today"]), rint(r["avg"])) if r["avg"] else None)}</td></tr>')
     tab = (f'<table class="rt"><thead><tr><th class="l">품목</th><th class="u">구분</th><th>수량</th><th class="u">조사 가격</th>'
            f'<th>오늘 비용(원)</th><th>평년 비용(원)</th><th>평년 대비</th></tr></thead><tbody>{"".join(rows)}</tbody></table>')
-    return (f'<div class="card"><h2>과일바구니 장바구니 지수</h2>{kpis}{chart}{b.get("index_history_html", "")}</div>'
+    return (f'<div class="card"><h2>농산물 장바구니 지수</h2>{kpis}{chart}{b.get("index_history_html", "")}</div>'
             f'<div class="card"><h2>공개 물가지표와 비교</h2>{cmp_tab}{note}</div>'
             f'<div class="card"><h2>장바구니 구성<small>{esc(b["spec"]["household"])}</small></h2><div class="tw">{tab}</div></div>')

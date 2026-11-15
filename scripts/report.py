@@ -276,13 +276,13 @@ def page_html(snap: dict, recs_by_cls: dict, s: dict, history: list[dict], cfg: 
 <div class="tabs" id="prices">{''.join(inputs)}<div class="seg">{''.join(labels)}</div>{''.join(panels)}</div>
 <div class="card"><h2>지난 리포트<small>날짜를 누르면 그날 리포트</small></h2><ul class="arch">{arch}</ul></div>"""
     fetched = snap.get("fetched_at", "")[:16].replace("T", " ")
-    return shell(f"과일바구니 가격 리포트 {asof}", body, rel, asof, fetched)
+    return shell(f"농산물 가격동향 리포트 {asof}", body, rel, asof, fetched)
 
 
 # ---------- 마크다운·엑셀 ----------
 
 def markdown(snap: dict, recs_by_cls: dict, s: dict) -> str:
-    L = [f"# 과일바구니 가격 리포트 {snap['date']}", "", f"**{s['headline']}**", "",
+    L = [f"# 농산물 가격동향 리포트 {snap['date']}", "", f"**{s['headline']}**", "",
          f"- 조사 품목({s['cls_name']}) {s['n_items']:,}개, 전일 대비 상승 {s['up']:,}개 / 하락 {s['down']:,}개",
          f"- 평년보다 비싼 과일 {s['pricey']:,}개 / {s['n_fruit']:,}개", ""]
     for cls, cats in recs_by_cls.items():
@@ -415,8 +415,8 @@ def main() -> int:
                 + '</div>'
                 + (f'<div class="card"><h2>오늘은 평년 수준이거나 비싼 재료<small>주재료 가격 수준 보통 이상이거나 제철이 아닌 요리</small></h2>'
                    f'<div class="rgrid full">{"".join(kitchen.recipe_card(r, "", links, True) for r in others)}</div></div>' if others else ""))
-    rec_html = shell("오늘의 알뜰 요리 - 과일바구니", rec_body, "", asof, fetched)
-    bk_html = shell("과일바구니 장바구니 지수", basketmod.section_html(bk, "", links, True), "", asof, fetched)
+    rec_html = shell("오늘의 알뜰 요리 - 농산물 가격동향", rec_body, "", asof, fetched)
+    bk_html = shell("농산물 장바구니 지수", basketmod.section_html(bk, "", links, True), "", asof, fetched)
     n_bars = sum(1 for cats in recs.values() for rs in cats.values() for r in rs if r["base"] is not None)
     errs = verify(idx, n_bars) + verify(rec_html, None, "recipes") + verify(bk_html, None, "basket")
     for p in sorted((DOCS / "items").glob("*.html")):

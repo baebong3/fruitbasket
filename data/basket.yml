@@ -3,7 +3,7 @@
 # 수량은 KAMIS 가격 단위와 무관하게 적고, 환산은 data/staples.yml 의 piece_g 를 씀
 # 지수 = 오늘 장바구니 비용 / 평년 가격으로 산 비용 × 100 (평년 = 100)
 
-name: 과일바구니 장바구니
+name: 농산물 장바구니
 household: 4인 가구 1주일
 items:
   - {item: 사과, kind: [후지, 홍로], qty: 5, unit: 개, group: 과일}
