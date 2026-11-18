@@ -1,9 +1,9 @@
 {
- "last_run": "2026-11-18T03:23:03+09:00",
- "result": "error",
- "survey_date": null,
- "latest_saved_date": "2026-11-16",
- "history_rows": 46832,
- "history_days": 268,
- "message": "KAMIS 요청 실패 (400/01/2026-11-18): HTTPSConnectionPool(host='www.kamis.or.kr', port=443): Read timed out. (read timeout=20)"
+ "last_run": "2026-11-19T02:55:22+09:00",
+ "result": "new_data",
+ "survey_date": "2026-11-18",
+ "latest_saved_date": "2026-11-18",
+ "history_rows": 47012,
+ "history_days": 269,
+ "message": ""
 }
